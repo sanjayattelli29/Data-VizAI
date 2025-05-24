@@ -8,5 +8,12 @@
     "@next/next/no-img-element": "off",
     "@typescript-eslint/no-empty-object-type": "off",
     "import/no-anonymous-default-export": "off"
-  }
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    ".next/",
+    "public/",
+    "dist/",
+    "build/"
+  ]
 }

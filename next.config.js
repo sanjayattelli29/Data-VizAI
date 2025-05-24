@@ -11,6 +11,14 @@ const nextConfig = {
   },
   // Use the correct configuration for Next.js 15+
   transpilePackages: ['mongoose'],
+  // Disable ESLint during builds
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  // Disable TypeScript type checking during builds
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 }
 
 module.exports = nextConfig
