@@ -99,13 +99,13 @@ export default function BoxPlot() {
           
           // If a dataset ID is provided in the URL, load that dataset
           if (datasetId && data.length > 0) {
-            const selectedDataset = data.find((d: any) => d._id === datasetId);
+            const selectedDataset = data.find((d: unknown) => d._id === datasetId);
             if (selectedDataset) {
               setCurrentDataset(selectedDataset);
               
               // Set default column based on column types
-              const numericColumn = selectedDataset.columns.find((col: any) => col.type === 'numeric');
-              const categoryColumn = selectedDataset.columns.find((col: any) => col.type === 'text');
+              const numericColumn = selectedDataset.columns.find((col: unknown) => col.type === 'numeric');
+              const categoryColumn = selectedDataset.columns.find((col: unknown) => col.type === 'text');
               
               if (numericColumn) setSelectedColumn(numericColumn.name);
               if (categoryColumn) setSelectedCategory(categoryColumn.name);
@@ -120,7 +120,7 @@ export default function BoxPlot() {
         } else {
           throw new Error('Failed to fetch datasets');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setError(error.message || 'An error occurred while fetching datasets');
       } finally {
         setIsLoading(false);
@@ -147,8 +147,8 @@ export default function BoxPlot() {
       setSelectedCategory('');
       
       // Set default columns based on column types
-      const numericColumn = selected.columns.find((col: any) => col.type === 'numeric');
-      const categoryColumn = selected.columns.find((col: any) => col.type === 'text');
+      const numericColumn = selected.columns.find((col: unknown) => col.type === 'numeric');
+      const categoryColumn = selected.columns.find((col: unknown) => col.type === 'text');
       
       if (numericColumn) setSelectedColumn(numericColumn.name);
       if (categoryColumn) setSelectedCategory(categoryColumn.name);
@@ -158,7 +158,7 @@ export default function BoxPlot() {
   const generateChartData = () => {
     if (!currentDataset || !selectedColumn) return;
 
-    const columnType = currentDataset.columns.find((col: any) => col.name === selectedColumn)?.type;
+    const columnType = currentDataset.columns.find((col: unknown) => col.name === selectedColumn)?.type;
 
     // For box plots, we need numeric data
     if (columnType !== 'numeric') {
@@ -174,7 +174,7 @@ export default function BoxPlot() {
       // Group data by category
       const categoryGroups: Record<string, number[]> = {};
       
-      currentDataset.data.forEach((item: any) => {
+      currentDataset.data.forEach((item: unknown) => {
         const categoryValue = item[selectedCategory];
         const numericValue = parseFloat(item[selectedColumn]);
         
@@ -204,7 +204,7 @@ export default function BoxPlot() {
       labels = boxPlotStats.map(item => item.category);
       
       // Prepare data for Chart.js
-      // Since Chart.js doesn't have a built-in box plot type, we'll simulate it with a bar chart
+      // Since Chart.js doesn&apos;t have a built-in box plot type, we&apos;ll simulate it with a bar chart
       boxPlotData = {
         labels,
         datasets: [
@@ -249,7 +249,7 @@ export default function BoxPlot() {
     } else {
       // Single box plot for the entire dataset
       const numericValues = currentDataset.data
-        .map((item: any) => parseFloat(item[selectedColumn]))
+        .map((item: unknown) => parseFloat(item[selectedColumn]))
         .filter((value: number) => !isNaN(value));
       
       if (numericValues.length === 0) {
@@ -393,7 +393,7 @@ export default function BoxPlot() {
                 onChange={(e) => setSelectedColumn(e.target.value)}
               >
                 <option value="">Select Column</option>
-                {currentDataset?.columns?.filter((column: any) => column.type === 'numeric').map((column: any) => (
+                {currentDataset?.columns?.filter((column: unknown) => column.type === 'numeric').map((column: unknown) => (
                   <option key={column.name} value={column.name}>
                     {column.name} (numeric)
                   </option>
@@ -412,7 +412,7 @@ export default function BoxPlot() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
                 <option value="">No Grouping</option>
-                {currentDataset?.columns?.filter((column: any) => column.type === 'text').map((column: any) => (
+                {currentDataset?.columns?.filter((column: unknown) => column.type === 'text').map((column: unknown) => (
                   <option key={column.name} value={column.name}>
                     {column.name} (text)
                   </option>

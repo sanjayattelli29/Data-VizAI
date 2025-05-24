@@ -512,7 +512,7 @@ export default function ProfilePage() {
                     ) : datasets.length > 0 ? (
                       <div className="bg-white shadow overflow-hidden sm:rounded-md">
                         <ul className="divide-y divide-gray-200">
-                          {datasets.slice(0, 5).map((dataset: any) => (
+                          {datasets.slice(0, 5).map((dataset: unknown) => (
                             <li key={dataset._id}>
                               <Link href={`/dashboard/data-table?id=${dataset._id}`} className="block hover:bg-gray-50">
                                 <div className="px-4 py-4 sm:px-6">
@@ -558,7 +558,7 @@ export default function ProfilePage() {
                       <div className="text-center py-8">
                         <ChartBarIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No Visualization History</h3>
-                        <p className="text-gray-500 mb-6">You haven't created any visualizations yet.</p>
+                        <p className="text-gray-500 mb-6">You haven&apos;t created any visualizations yet.</p>
                         <Link
                           href="/dashboard/bar-charts"
                           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

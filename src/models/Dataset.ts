@@ -7,7 +7,7 @@ export interface IDataset extends Document {
     name: string;
     type: 'text' | 'numeric' | 'mixed';
   }>;
-  data: any[];
+  data: unknown[];
   createdAt: Date;
   updatedAt: Date;
 }

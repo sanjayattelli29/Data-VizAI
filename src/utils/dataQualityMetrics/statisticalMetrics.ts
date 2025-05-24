@@ -59,8 +59,8 @@ export function calculateFeatureCorrelationMean(data: Record<string, any>[], num
     const correlations: number[] = [];
     
     // Calculate correlation for each pair of numeric columns
-    for (let i = 0; i < numericCols.length; i++) {
-      for (let j = i + 1; j < numericCols.length; j++) {
+    for (const i = 0; i < numericCols.length; i++) {
+      for (const j = i + 1; j < numericCols.length; j++) {
         const col1 = numericCols[i];
         const col2 = numericCols[j];
         
@@ -160,7 +160,7 @@ export function calculateVarianceThresholdCheck(data: Record<string, any>[], num
       return getRandomFallback('Variance_Threshold_Check');
     }
     
-    let lowVarianceCount = 0;
+    const lowVarianceCount = 0;
     
     numericCols.forEach(col => {
       // Extract numeric values for the column

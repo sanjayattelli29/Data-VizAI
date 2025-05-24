@@ -17,8 +17,8 @@ export function calculateMissingValuesPct(data: Record<string, any>[]): number {
   try {
     if (!data || data.length === 0) return getRandomFallback('Missing_Values_Pct');
     
-    let totalCells = 0;
-    let missingCells = 0;
+    const totalCells = 0;
+    const missingCells = 0;
     
     data.forEach(row => {
       Object.values(row).forEach(value => {
@@ -69,8 +69,8 @@ export function calculateOutlierRate(data: Record<string, any>[], numericCols: s
       return getRandomFallback('Outlier_Rate');
     }
     
-    let outlierCount = 0;
-    let totalValues = 0;
+    const outlierCount = 0;
+    const totalValues = 0;
     
     numericCols.forEach(col => {
       // Extract numeric values for the column
@@ -111,8 +111,8 @@ export function calculateInconsistencyRate(data: Record<string, any>[], columns:
   try {
     if (!data || data.length === 0) return getRandomFallback('Inconsistency_Rate');
     
-    let inconsistencies = 0;
-    let totalChecks = 0;
+    const inconsistencies = 0;
+    const totalChecks = 0;
     
     // Check for negative values in columns that should be positive
     const positivePatterns = ['age', 'price', 'cost', 'income', 'salary', 'count', 'amount', 'quantity'];
@@ -184,8 +184,8 @@ export function calculateDataTypeMismatchRate(data: Record<string, any>[], colum
   try {
     if (!data || data.length === 0) return getRandomFallback('Data_Type_Mismatch_Rate');
     
-    let mismatches = 0;
-    let totalChecks = 0;
+    const mismatches = 0;
+    const totalChecks = 0;
     
     columns.forEach(column => {
       data.forEach(row => {
@@ -234,8 +234,8 @@ export function calculateRangeViolationRate(data: Record<string, any>[], numeric
       return getRandomFallback('Range_Violation_Rate');
     }
     
-    let violations = 0;
-    let totalValues = 0;
+    const violations = 0;
+    const totalValues = 0;
     
     numericCols.forEach(col => {
       // Extract numeric values for the column
@@ -288,11 +288,11 @@ export function calculateDomainConstraintViolations(data: Record<string, any>[],
     
     if (!data || data.length === 0) return getRandomFallback('Domain_Constraint_Violations');
     
-    let violations = 0;
-    let totalChecks = 0;
+    const violations = 0;
+    const totalChecks = 0;
     
     // Define common domain constraints
-    const domainConstraints: Record<string, (value: any) => boolean> = {
+    const domainConstraints: Record<string, (value: unknown) => boolean> = {
       'email': (value) => {
         if (typeof value !== 'string') return false;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

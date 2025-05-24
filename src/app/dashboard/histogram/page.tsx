@@ -48,12 +48,12 @@ export default function Histogram() {
           
           // If a dataset ID is provided in the URL, load that dataset
           if (datasetId && data.length > 0) {
-            const selectedDataset = data.find((d: any) => d._id === datasetId);
+            const selectedDataset = data.find((d: unknown) => d._id === datasetId);
             if (selectedDataset) {
               setCurrentDataset(selectedDataset);
               
               // Set default column based on column types
-              const numericColumn = selectedDataset.columns.find((col: any) => col.type === 'numeric');
+              const numericColumn = selectedDataset.columns.find((col: unknown) => col.type === 'numeric');
               if (numericColumn) setSelectedColumn(numericColumn.name);
             } else {
               // If the dataset with the provided ID is not found, load the first dataset
@@ -66,7 +66,7 @@ export default function Histogram() {
         } else {
           throw new Error('Failed to fetch datasets');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setError(error.message || 'An error occurred while fetching datasets');
       } finally {
         setIsLoading(false);
@@ -92,7 +92,7 @@ export default function Histogram() {
       setSelectedColumn('');
       
       // Set default column based on column types
-      const numericColumn = selected.columns.find((col: any) => col.type === 'numeric');
+      const numericColumn = selected.columns.find((col: unknown) => col.type === 'numeric');
       if (numericColumn) setSelectedColumn(numericColumn.name);
     }
   };
@@ -100,7 +100,7 @@ export default function Histogram() {
   const generateChartData = () => {
     if (!currentDataset || !selectedColumn) return;
 
-    const columnType = currentDataset.columns.find((col: any) => col.name === selectedColumn)?.type;
+    const columnType = currentDataset.columns.find((col: unknown) => col.name === selectedColumn)?.type;
 
     // For histograms, we need numeric data
     if (columnType !== 'numeric') {
@@ -111,7 +111,7 @@ export default function Histogram() {
 
     // Extract numeric values
     const numericValues = currentDataset.data
-      .map((item: any) => parseFloat(item[selectedColumn]))
+      .map((item: unknown) => parseFloat(item[selectedColumn]))
       .filter((value: number) => !isNaN(value));
 
     if (numericValues.length === 0) {
@@ -250,7 +250,7 @@ export default function Histogram() {
                 onChange={(e) => setSelectedColumn(e.target.value)}
               >
                 <option value="">Select Column</option>
-                {currentDataset?.columns?.filter((column: any) => column.type === 'numeric').map((column: any) => (
+                {currentDataset?.columns?.filter((column: unknown) => column.type === 'numeric').map((column: unknown) => (
                   <option key={column.name} value={column.name}>
                     {column.name} (numeric)
                   </option>

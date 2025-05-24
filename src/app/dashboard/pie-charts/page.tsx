@@ -42,13 +42,13 @@ export default function PieCharts() {
           
           // If a dataset ID is provided in the URL, load that dataset
           if (datasetId && data.length > 0) {
-            const selectedDataset = data.find((d: any) => d._id === datasetId);
+            const selectedDataset = data.find((d: unknown) => d._id === datasetId);
             if (selectedDataset) {
               setCurrentDataset(selectedDataset);
               
               // Set default category and value based on column types
-              const textColumn = selectedDataset.columns.find((col: any) => col.type === 'text');
-              const numericColumn = selectedDataset.columns.find((col: any) => col.type === 'numeric');
+              const textColumn = selectedDataset.columns.find((col: unknown) => col.type === 'text');
+              const numericColumn = selectedDataset.columns.find((col: unknown) => col.type === 'numeric');
               
               if (textColumn) setSelectedCategory(textColumn.name);
               if (numericColumn) setSelectedValue(numericColumn.name);
@@ -63,7 +63,7 @@ export default function PieCharts() {
         } else {
           throw new Error('Failed to fetch datasets');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setError(error.message || 'An error occurred while fetching datasets');
       } finally {
         setIsLoading(false);
@@ -90,8 +90,8 @@ export default function PieCharts() {
       setSelectedValue('');
       
       // Set default category and value based on column types
-      const textColumn = selected.columns.find((col: any) => col.type === 'text');
-      const numericColumn = selected.columns.find((col: any) => col.type === 'numeric');
+      const textColumn = selected.columns.find((col: unknown) => col.type === 'text');
+      const numericColumn = selected.columns.find((col: unknown) => col.type === 'numeric');
       
       if (textColumn) setSelectedCategory(textColumn.name);
       if (numericColumn) setSelectedValue(numericColumn.name);
@@ -101,8 +101,8 @@ export default function PieCharts() {
   const generateChartData = () => {
     if (!currentDataset || !selectedCategory || !selectedValue) return;
 
-    const categoryType = currentDataset.columns.find((col: any) => col.name === selectedCategory)?.type;
-    const valueType = currentDataset.columns.find((col: any) => col.name === selectedValue)?.type;
+    const categoryType = currentDataset.columns.find((col: unknown) => col.name === selectedCategory)?.type;
+    const valueType = currentDataset.columns.find((col: unknown) => col.name === selectedValue)?.type;
 
     // For pie charts, category should be categorical (text) and value should be numeric
     if (valueType !== 'numeric') {
@@ -114,7 +114,7 @@ export default function PieCharts() {
     // Group data by category values and calculate aggregate values
     const groupedData: Record<string, number[]> = {};
     
-    currentDataset.data.forEach((item: any) => {
+    currentDataset.data.forEach((item: unknown) => {
       const categoryValue = item[selectedCategory]?.toString() || 'Undefined';
       const numValue = parseFloat(item[selectedValue]);
       
@@ -233,7 +233,7 @@ export default function PieCharts() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
                 <option value="" className="font-bold text-gray-900">Select Category</option>
-                {currentDataset?.columns?.map((column: any) => (
+                {currentDataset?.columns?.map((column: unknown) => (
                   <option key={column.name} value={column.name} className="font-bold text-gray-900">
                     {column.name} ({column.type})
                   </option>
@@ -252,7 +252,7 @@ export default function PieCharts() {
                 onChange={(e) => setSelectedValue(e.target.value)}
               >
                 <option value="" className="font-bold text-gray-900">Select Value</option>
-                {currentDataset?.columns?.filter((column: any) => column.type === 'numeric').map((column: any) => (
+                {currentDataset?.columns?.filter((column: unknown) => column.type === 'numeric').map((column: unknown) => (
                   <option key={column.name} value={column.name} className="font-bold text-gray-900">
                     {column.name} (numeric)
                   </option>
@@ -315,7 +315,7 @@ export default function PieCharts() {
                             // Calculate total with proper type handling
                             const data = context.chart.data.datasets[0].data;
                             const total = Array.isArray(data) ? 
-                              data.reduce((a: number, b: any) => a + (typeof b === 'number' ? b : 0), 0) : 0;
+                              data.reduce((a: number, b: unknown) => a + (typeof b === 'number' ? b : 0), 0) : 0;
                             const percentage = total > 0 ? Math.round(((value as number) / total) * 100) : 0;
                             return `${label}: ${value} (${percentage}%)`;
                           }

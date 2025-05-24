@@ -52,13 +52,13 @@ export default function AreaCharts() {
           
           // If a dataset ID is provided in the URL, load that dataset
           if (datasetId && data.length > 0) {
-            const selectedDataset = data.find((d: any) => d._id === datasetId);
+            const selectedDataset = data.find((d: unknown) => d._id === datasetId);
             if (selectedDataset) {
               setCurrentDataset(selectedDataset);
               
               // Set default X and Y axes based on column types
-              const textColumn = selectedDataset.columns.find((col: any) => col.type === 'text');
-              const numericColumn = selectedDataset.columns.find((col: any) => col.type === 'numeric');
+              const textColumn = selectedDataset.columns.find((col: unknown) => col.type === 'text');
+              const numericColumn = selectedDataset.columns.find((col: unknown) => col.type === 'numeric');
               
               if (textColumn) setSelectedXAxis(textColumn.name);
               if (numericColumn) setSelectedYAxis(numericColumn.name);
@@ -73,7 +73,7 @@ export default function AreaCharts() {
         } else {
           throw new Error('Failed to fetch datasets');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setError(error.message || 'An error occurred while fetching datasets');
       } finally {
         setIsLoading(false);
@@ -100,8 +100,8 @@ export default function AreaCharts() {
       setSelectedYAxis('');
       
       // Set default X and Y axes based on column types
-      const textColumn = selected.columns.find((col: any) => col.type === 'text');
-      const numericColumn = selected.columns.find((col: any) => col.type === 'numeric');
+      const textColumn = selected.columns.find((col: unknown) => col.type === 'text');
+      const numericColumn = selected.columns.find((col: unknown) => col.type === 'numeric');
       
       if (textColumn) setSelectedXAxis(textColumn.name);
       if (numericColumn) setSelectedYAxis(numericColumn.name);
@@ -111,8 +111,8 @@ export default function AreaCharts() {
   const generateChartData = () => {
     if (!currentDataset || !selectedXAxis || !selectedYAxis) return;
 
-    const xAxisType = currentDataset.columns.find((col: any) => col.name === selectedXAxis)?.type;
-    const yAxisType = currentDataset.columns.find((col: any) => col.name === selectedYAxis)?.type;
+    const xAxisType = currentDataset.columns.find((col: unknown) => col.name === selectedXAxis)?.type;
+    const yAxisType = currentDataset.columns.find((col: unknown) => col.name === selectedYAxis)?.type;
 
     // For area charts, X-axis is typically categorical (text) or sequential, and Y-axis should be numeric
     if (yAxisType !== 'numeric') {
@@ -122,7 +122,7 @@ export default function AreaCharts() {
     }
 
     // Sort data by X-axis values if they are numeric or dates
-    let sortedData = [...currentDataset.data];
+    const sortedData = [...currentDataset.data];
     if (xAxisType === 'numeric') {
       sortedData.sort((a, b) => parseFloat(a[selectedXAxis]) - parseFloat(b[selectedXAxis]));
     }
@@ -234,7 +234,7 @@ export default function AreaCharts() {
                 onChange={(e) => setSelectedXAxis(e.target.value)}
               >
                 <option value="">Select X-Axis</option>
-                {currentDataset?.columns?.map((column: any) => (
+                {currentDataset?.columns?.map((column: unknown) => (
                   <option key={column.name} value={column.name}>
                     {column.name} ({column.type})
                   </option>
@@ -253,7 +253,7 @@ export default function AreaCharts() {
                 onChange={(e) => setSelectedYAxis(e.target.value)}
               >
                 <option value="">Select Y-Axis</option>
-                {currentDataset?.columns?.filter((column: any) => column.type === 'numeric').map((column: any) => (
+                {currentDataset?.columns?.filter((column: unknown) => column.type === 'numeric').map((column: unknown) => (
                   <option key={column.name} value={column.name}>
                     {column.name} (numeric)
                   </option>

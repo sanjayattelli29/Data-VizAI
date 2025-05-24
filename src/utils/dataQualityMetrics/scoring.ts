@@ -35,7 +35,7 @@ export function calculateDataQualityScore(metrics: Record<string, number>): numb
       Math.max(0, 1 - metrics['Missing_Values_Pct'] / 100);
     
     // Duplicate records (lower is better)
-    const totalRecords = 100; // Assume 100 records if we don't know the actual count
+    const totalRecords = 100; // Assume 100 records if we don&apos;t know the actual count
     normalizedScores['Duplicate_Records_Count'] = 
       Math.max(0, 1 - metrics['Duplicate_Records_Count'] / totalRecords);
     
@@ -70,8 +70,8 @@ export function calculateDataQualityScore(metrics: Record<string, number>): numb
       Math.min(1, cardScore / 50);
     
     // Calculate weighted average
-    let weightedSum = 0;
-    let totalWeight = 0;
+    const weightedSum = 0;
+    const totalWeight = 0;
     
     Object.entries(weights).forEach(([metric, weight]) => {
       if (normalizedScores[metric] !== undefined) {

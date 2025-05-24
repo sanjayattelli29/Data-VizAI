@@ -12,7 +12,7 @@
 export * from './dataQualityMetrics/index';
 
 // Export a simplified API for easy integration with the dashboard
-export const saveMetricsToDatabase = async (userId: string, datasetId: string, metrics: any) => {
+export const saveMetricsToDatabase = async (userId: string, datasetId: string, metrics: unknown) => {
   try {
     // Make an API call to save metrics to MongoDB
     const response = await fetch('/api/metrics/save', {
@@ -54,7 +54,7 @@ export interface Column {
   metadata?: {
     min?: number;
     max?: number;
-    allowedValues?: any[];
+    allowedValues?: unknown[];
     format?: string;
     constraints?: Record<string, any>;
   };
@@ -126,7 +126,7 @@ const METRIC_RANGES: Record<string, [number, number]> = {
   'Data_Quality_Score': [0, 100]
 };/**
  * A comprehensive class to calculate data quality metrics for any tabular dataset.
- * The class handles various data types, provides fallback values when metrics can't be calculated,
+ * The class handles various data types, provides fallback values when metrics can&apos;t be calculated,
  * and outputs a comprehensive set of metrics.
  */
 export class DataQualityMetrics {
@@ -180,7 +180,7 @@ export class DataQualityMetrics {
    * @param values - Array of values to check
    * @returns True if the values are dates, False otherwise
    */
-  private isDateColumn(values: any[]): boolean {
+  private isDateColumn(values: unknown[]): boolean {
     if (values.length === 0) return false;
     
     // Check if all non-null values can be parsed as dates
@@ -252,8 +252,8 @@ export class DataQualityMetrics {
       try {
         if (!data || data.length === 0) return this.getRandomFallback('Missing_Values_Pct');
         
-        let totalCells = 0;
-        let missingCells = 0;
+        const totalCells = 0;
+        const missingCells = 0;
         
         data.forEach(row => {
           Object.values(row).forEach(value => {
@@ -304,8 +304,8 @@ export class DataQualityMetrics {
           return this.getRandomFallback('Outlier_Rate');
         }
         
-        let outlierCount = 0;
-        let totalValues = 0;
+        const outlierCount = 0;
+        const totalValues = 0;
         
         numericCols.forEach(col => {
           // Extract numeric values for the column
@@ -363,8 +363,8 @@ export class DataQualityMetrics {
           return this.getRandomFallback('Data_Type_Mismatch_Rate');
         }
         
-        let mismatches = 0;
-        let totalChecks = 0;
+        const mismatches = 0;
+        const totalChecks = 0;
         
         columns.forEach(column => {
           const { name, type } = column;
@@ -383,7 +383,7 @@ export class DataQualityMetrics {
               if (isNaN(numValue)) {
                 mismatches++;
               } else if (typeof value === 'string') {
-                // Check if string representation doesn't match numeric pattern
+                // Check if string representation doesn&apos;t match numeric pattern
                 if (!value.match(/^-?\d*\.?\d+$/)) {
                   mismatches++;
                 }
@@ -395,7 +395,7 @@ export class DataQualityMetrics {
                 mismatches++;
               }
             } else if (type === 'categorical') {
-              // Check if categorical column contains numeric values when it shouldn't
+              // Check if categorical column contains numeric values when it shouldn&apos;t
               // This is a simplified check - in a real implementation, you might have more complex rules
               if (typeof value === 'number' && column.metadata?.allowedValues && 
                   !column.metadata.allowedValues.includes(value)) {
@@ -429,8 +429,8 @@ export class DataQualityMetrics {
           return this.getRandomFallback('Inconsistency_Rate');
         }
         
-        let inconsistencyCount = 0;
-        let totalChecks = 0;
+        const inconsistencyCount = 0;
+        const totalChecks = 0;
         
         // Check for inconsistencies in each column
         columns.forEach(column => {
@@ -512,7 +512,7 @@ export class DataQualityMetrics {
             return this.getRandomFallback('Cardinality_Categorical');
           }
           
-          let totalCardinality = 0;
+          const totalCardinality = 0;
           
           categoricalCols.forEach(col => {
             const uniqueValues = new Set();
@@ -552,11 +552,11 @@ export class DataQualityMetrics {
           const meanY = mean(y);
           
           // Calculate covariance and standard deviations
-          let covariance = 0;
-          let varX = 0;
-          let varY = 0;
+          const covariance = 0;
+          const varX = 0;
+          const varY = 0;
           
-          for (let i = 0; i < n; i++) {
+          for (const i = 0; i < n; i++) {
             const diffX = x[i] - meanX;
             const diffY = y[i] - meanY;
             
@@ -604,11 +604,11 @@ export class DataQualityMetrics {
           });
           
           // Calculate correlations between all pairs of columns
-          let totalCorrelation = 0;
-          let pairCount = 0;
+          const totalCorrelation = 0;
+          const pairCount = 0;
           
-          for (let i = 0; i < numericCols.length; i++) {
-            for (let j = i + 1; j < numericCols.length; j++) {
+          for (const i = 0; i < numericCols.length; i++) {
+            for (const j = i + 1; j < numericCols.length; j++) {
               const col1 = numericCols[i];
               const col2 = numericCols[j];
               
@@ -617,7 +617,7 @@ export class DataQualityMetrics {
               
               // Find common indices where both columns have values
               const commonIndices: number[] = [];
-              for (let k = 0; k < Math.min(values1.length, values2.length); k++) {
+              for (const k = 0; k < Math.min(values1.length, values2.length); k++) {
                 if (values1[k] !== undefined && values2[k] !== undefined) {
                   commonIndices.push(k);
                 }
@@ -661,8 +661,8 @@ export class DataQualityMetrics {
           const firstHalf = data.slice(0, halfSize);
           const secondHalf = data.slice(halfSize);
           
-          let totalDrift = 0;
-          let validColumns = 0;
+          const totalDrift = 0;
+          const validColumns = 0;
           
           numericCols.forEach(col => {
             // Extract numeric values for each half
@@ -733,7 +733,7 @@ export class DataQualityMetrics {
                       date = parsedDate;
                     }
                   } else if (typeof value === 'number') {
-                    // Assume it's a timestamp in milliseconds
+                    // Assume it&apos;s a timestamp in milliseconds
                     date = new Date(value);
                   }
                   
@@ -793,7 +793,7 @@ export class DataQualityMetrics {
               return this.getRandomFallback('Label_Noise_Rate');
             }
             
-            // Extract target values and check if it's a classification task
+            // Extract target values and check if it&apos;s a classification task
             const targetValues = data.map(row => row[targetColumn])
               .filter(val => val !== null && val !== undefined && val !== '');
             
@@ -829,17 +829,17 @@ export class DataQualityMetrics {
             
             // Implement a simplified k-nearest neighbors approach to detect mislabeled instances
             const k = Math.min(5, Math.floor(Math.sqrt(cleanData.length)));
-            let potentiallyMislabeled = 0;
+            const potentiallyMislabeled = 0;
             
             // For each instance, check if its label agrees with the majority of its k nearest neighbors
-            for (let i = 0; i < cleanData.length; i++) {
+            for (const i = 0; i < cleanData.length; i++) {
               const currentInstance = cleanData[i];
               const currentLabel = currentInstance[targetColumn];
               
               // Calculate distances to all other instances
               const distances: { index: number; distance: number }[] = [];
               
-              for (let j = 0; j < cleanData.length; j++) {
+              for (const j = 0; j < cleanData.length; j++) {
                 if (i !== j) {
                   const distance = this.calculateEuclideanDistance(
                     currentInstance, cleanData[j], numericCols
@@ -860,8 +860,8 @@ export class DataQualityMetrics {
               });
               
               // Find majority label among neighbors
-              let majorityLabel = '';
-              let maxCount = 0;
+              const majorityLabel = '';
+              const maxCount = 0;
               
               Object.entries(labelCounts).forEach(([label, count]) => {
                 if (count > maxCount) {
@@ -907,7 +907,7 @@ export class DataQualityMetrics {
               return this.getRandomFallback('Class_Overlap_Score');
             }
             
-            // Extract target values and check if it's a classification task
+            // Extract target values and check if it&apos;s a classification task
             const targetValues = data.map(row => row[targetColumn])
               .filter(val => val !== null && val !== undefined && val !== '');
             
@@ -942,14 +942,14 @@ export class DataQualityMetrics {
             }
             
             // Calculate the silhouette score as a measure of class separation
-            // Since we don't have direct access to silhouette_score like in Python,
-            // we'll implement a simplified version
+            // Since we don&apos;t have direct access to silhouette_score like in Python,
+            // we&apos;ll implement a simplified version
             
             // 1. Calculate pairwise distances between all points
             const distances: number[][] = [];
-            for (let i = 0; i < cleanData.length; i++) {
+            for (const i = 0; i < cleanData.length; i++) {
               distances[i] = [];
-              for (let j = 0; j < cleanData.length; j++) {
+              for (const j = 0; j < cleanData.length; j++) {
                 if (i === j) {
                   distances[i][j] = 0;
                 } else {
@@ -963,17 +963,17 @@ export class DataQualityMetrics {
             // 2. Calculate silhouette score for each point
             const silhouetteScores: number[] = [];
             
-            for (let i = 0; i < cleanData.length; i++) {
+            for (const i = 0; i < cleanData.length; i++) {
               const currentClass = cleanData[i][targetColumn];
               
               // Calculate average distance to points in the same class (a)
-              let sameClassCount = 0;
-              let sameClassDistanceSum = 0;
+              const sameClassCount = 0;
+              const sameClassDistanceSum = 0;
               
               // Calculate minimum average distance to points in different classes (b)
               const otherClassDistances: Record<string, { sum: number; count: number }> = {};
               
-              for (let j = 0; j < cleanData.length; j++) {
+              for (const j = 0; j < cleanData.length; j++) {
                 if (i === j) continue;
                 
                 const otherClass = cleanData[j][targetColumn];
@@ -994,7 +994,7 @@ export class DataQualityMetrics {
               const a = sameClassCount > 0 ? sameClassDistanceSum / sameClassCount : 0;
               
               // Find the minimum average distance to another class
-              let minOtherClassDistance = Infinity;
+              const minOtherClassDistance = Infinity;
               
               Object.values(otherClassDistances).forEach(({ sum, count }) => {
                 if (count > 0) {
@@ -1044,7 +1044,7 @@ export class DataQualityMetrics {
           point2: Record<string, any>,
           features: string[]
         ): number {
-          let sumSquaredDiff = 0;
+          const sumSquaredDiff = 0;
           
           features.forEach(feature => {
             const val1 = typeof point1[feature] === 'string' ? parseFloat(point1[feature]) : point1[feature];
@@ -1094,7 +1094,7 @@ export class DataQualityMetrics {
             
             const classes = Object.keys(classCounts);
             
-            // If there's only one class, imbalance is 0
+            // If there&apos;s only one class, imbalance is 0
             if (classes.length <= 1) {
               return 0;
             }
@@ -1106,7 +1106,7 @@ export class DataQualityMetrics {
             
             // Calculate Shannon entropy of the class distribution
             const totalCount = targetValues.length;
-            let entropy = 0;
+            const entropy = 0;
             
             classes.forEach(cls => {
               const probability = classCounts[cls] / totalCount;
@@ -1138,9 +1138,9 @@ export class DataQualityMetrics {
               return this.getRandomFallback('Null_vs_NaN_Distribution');
             }
             
-            let nullCount = 0;
-            let nanCount = 0;
-            let totalMissing = 0;
+            const nullCount = 0;
+            const nanCount = 0;
+            const totalMissing = 0;
             
             // Count null, undefined, and NaN values
             data.forEach(row => {
@@ -1287,7 +1287,7 @@ export class DataQualityMetrics {
          * @param targetValues - Target values (can be categorical or numeric)
          * @returns Mutual information score
          */
-        private calculateMutualInformationForCategorical(featureValues: number[], targetValues: any[]): number {
+        private calculateMutualInformationForCategorical(featureValues: number[], targetValues: unknown[]): number {
           try {
             // Bin the feature values into 10 bins
             const min = Math.min(...featureValues);
@@ -1301,7 +1301,7 @@ export class DataQualityMetrics {
             const featureCounts: Record<string, number> = {};
             const targetCounts: Record<string, number> = {};
             
-            for (let i = 0; i < bins.length; i++) {
+            for (const i = 0; i < bins.length; i++) {
               const bin = bins[i].toString();
               const target = targetValues[i].toString();
               
@@ -1318,7 +1318,7 @@ export class DataQualityMetrics {
             }
             
             // Calculate mutual information
-            let mi = 0;
+            const mi = 0;
             const n = bins.length;
             
             Object.keys(jointCounts).forEach(bin => {
@@ -1355,7 +1355,7 @@ export class DataQualityMetrics {
           
           // Assign ranks
           const ranks = new Array(values.length).fill(0);
-          for (let i = 0; i < indices.length; i++) {
+          for (const i = 0; i < indices.length; i++) {
             ranks[indices[i]] = i + 1;
           }
           
@@ -1373,9 +1373,9 @@ export class DataQualityMetrics {
           if (ranks1.length !== ranks2.length || ranks1.length === 0) return NaN;
           
           const n = ranks1.length;
-          let sumD2 = 0;
+          const sumD2 = 0;
           
-          for (let i = 0; i < n; i++) {
+          for (const i = 0; i < n; i++) {
             const d = ranks1[i] - ranks2[i];
             sumD2 += d * d;
           }
@@ -1410,7 +1410,7 @@ export class DataQualityMetrics {
               return this.getRandomFallback('Anomaly_Count');
             }
             
-            // Since we don't have Isolation Forest in TypeScript, we'll use a statistical approach
+            // Since we don&apos;t have Isolation Forest in TypeScript, we&apos;ll use a statistical approach
             // to identify anomalies based on multiple dimensions
             
             // 1. Calculate Z-scores for each column
@@ -1429,18 +1429,18 @@ export class DataQualityMetrics {
             const anomalyScores = new Array(data.length).fill(0);
             
             validCols.forEach(col => {
-              for (let i = 0; i < data.length; i++) {
+              for (const i = 0; i < data.length; i++) {
                 anomalyScores[i] += zScores[col][i];
               }
             });
             
             // Normalize by number of columns
-            for (let i = 0; i < anomalyScores.length; i++) {
+            for (const i = 0; i < anomalyScores.length; i++) {
               anomalyScores[i] /= validCols.length;
             }
             
             // 3. Count points with anomaly scores above threshold
-            // Typically, we'd expect about 5% of points to be anomalies (similar to contamination=0.05 in IsolationForest)
+            // Typically, we&apos;d expect about 5% of points to be anomalies (similar to contamination=0.05 in IsolationForest)
             const sortedScores = [...anomalyScores].sort((a, b) => b - a);
             const threshold = sortedScores[Math.floor(data.length * 0.05)] || 3; // Default to 3 if not enough data
             
@@ -1467,8 +1467,8 @@ export class DataQualityMetrics {
               return this.getRandomFallback('Encoding_Coverage_Rate');
             }
             
-            let totalValues = 0;
-            let encodableValues = 0;
+            const totalValues = 0;
+            const encodableValues = 0;
             
             categoricalCols.forEach(col => {
               // Get all values for this column
@@ -1522,8 +1522,8 @@ export class DataQualityMetrics {
               return this.getRandomFallback('Variance_Threshold_Check');
             }
             
-            let lowVarianceCount = 0;
-            let validColumnCount = 0;
+            const lowVarianceCount = 0;
+            const validColumnCount = 0;
             
             // Threshold for considering a feature to have low variance
             // This is a heuristic and might need adjustment based on domain knowledge
@@ -1541,7 +1541,7 @@ export class DataQualityMetrics {
               
               // Calculate variance
               const meanVal = mean(values);
-              let sumSquaredDiff = 0;
+              const sumSquaredDiff = 0;
               
               values.forEach(val => {
                 const diff = val - meanVal;
@@ -1581,8 +1581,8 @@ export class DataQualityMetrics {
             }
             
             // Count total cells and non-empty cells
-            let totalCells = 0;
-            let nonEmptyCells = 0;
+            const totalCells = 0;
+            const nonEmptyCells = 0;
             
             // Calculate basic completeness (non-null values)
             data.forEach(row => {
@@ -1634,8 +1634,8 @@ export class DataQualityMetrics {
               return this.getRandomFallback('Domain_Constraint_Violations');
             }
             
-            let violations = 0;
-            let totalChecks = 0;
+            const violations = 0;
+            const totalChecks = 0;
             
             // Define domain constraints with proper typing
             interface NumericConstraint {
@@ -1761,8 +1761,8 @@ export class DataQualityMetrics {
             });
             
             // Count violations
-            let violationCount = 0;
-            let totalValues = 0;
+            const violationCount = 0;
+            const totalValues = 0;
             
             numericCols.forEach(col => {
               if (!ranges[col]) return;
@@ -1828,8 +1828,8 @@ export class DataQualityMetrics {
             };
             
             // Calculate weighted score
-            let weightedSum = 0;
-            let totalWeight = 0;
+            const weightedSum = 0;
+            const totalWeight = 0;
             
             Object.entries(weights).forEach(([metric, weight]) => {
               if (metrics[metric] !== undefined) {
@@ -2298,7 +2298,7 @@ export async function calculateMetricsForMultipleDatasets(
   const results: Record<string, number | string>[] = [];
   const metricsCalculator = new DataQualityMetrics();
   
-  for (let i = 0; i < datasets.length; i++) {
+  for (const i = 0; i < datasets.length; i++) {
     const dataset = datasets[i];
     const targetColumn = options?.targetColumns?.[dataset.id];
     
@@ -2353,8 +2353,8 @@ export function compareMetrics(
   });
   
   // Calculate overall improvement score
-  let improvementScore = 0;
-  let totalWeight = 0;
+  const improvementScore = 0;
+  const totalWeight = 0;
   
   // Define weights and whether higher is better for each metric
   const metricProperties: Record<string, { weight: number; higherIsBetter: boolean }> = {
@@ -2432,7 +2432,7 @@ export function generateDataQualityReport(
     : 0;
   
   // Generate summary
-  let summaryQuality = 'poor';
+  const summaryQuality = 'poor';
   if (overallScore >= 80) summaryQuality = 'excellent';
   else if (overallScore >= 60) summaryQuality = 'good';
   else if (overallScore >= 40) summaryQuality = 'fair';

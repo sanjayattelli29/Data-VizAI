@@ -196,7 +196,7 @@ export default function UploadHistoryPage() {
             <div className="bg-white rounded-lg shadow-md p-8 text-center">
               <ChartBarIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h2 className="text-xl font-semibold mb-2">No Upload History Found</h2>
-              <p className="text-gray-500 mb-6">You haven't uploaded any datasets yet.</p>
+              <p className="text-gray-500 mb-6">You haven&apos;t uploaded any datasets yet.</p>
               <Link
                 href="/dashboard/upload"
                 className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"

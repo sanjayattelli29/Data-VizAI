@@ -5,7 +5,7 @@ import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 // GET /api/datasets - Get all datasets for the current user
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 

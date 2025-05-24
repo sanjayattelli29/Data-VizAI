@@ -48,13 +48,13 @@ export default function WaterfallChart() {
           
           // If a dataset ID is provided in the URL, load that dataset
           if (datasetId && data.length > 0) {
-            const selectedDataset = data.find((d: any) => d._id === datasetId);
+            const selectedDataset = data.find((d: unknown) => d._id === datasetId);
             if (selectedDataset) {
               setCurrentDataset(selectedDataset);
               
               // Set default columns based on column types
-              const categoryColumn = selectedDataset.columns.find((col: any) => col.type === 'text');
-              const valueColumn = selectedDataset.columns.find((col: any) => col.type === 'numeric');
+              const categoryColumn = selectedDataset.columns.find((col: unknown) => col.type === 'text');
+              const valueColumn = selectedDataset.columns.find((col: unknown) => col.type === 'numeric');
               
               if (categoryColumn) setSelectedCategory(categoryColumn.name);
               if (valueColumn) setSelectedValue(valueColumn.name);
@@ -69,7 +69,7 @@ export default function WaterfallChart() {
         } else {
           throw new Error('Failed to fetch datasets');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setError(error.message || 'An error occurred while fetching datasets');
       } finally {
         setIsLoading(false);
@@ -96,8 +96,8 @@ export default function WaterfallChart() {
       setSelectedValue('');
       
       // Set default columns based on column types
-      const categoryColumn = selected.columns.find((col: any) => col.type === 'text');
-      const valueColumn = selected.columns.find((col: any) => col.type === 'numeric');
+      const categoryColumn = selected.columns.find((col: unknown) => col.type === 'text');
+      const valueColumn = selected.columns.find((col: unknown) => col.type === 'numeric');
       
       if (categoryColumn) setSelectedCategory(categoryColumn.name);
       if (valueColumn) setSelectedValue(valueColumn.name);
@@ -107,8 +107,8 @@ export default function WaterfallChart() {
   const generateChartData = () => {
     if (!currentDataset || !selectedCategory || !selectedValue) return;
 
-    const categoryType = currentDataset.columns.find((col: any) => col.name === selectedCategory)?.type;
-    const valueType = currentDataset.columns.find((col: any) => col.name === selectedValue)?.type;
+    const categoryType = currentDataset.columns.find((col: unknown) => col.name === selectedCategory)?.type;
+    const valueType = currentDataset.columns.find((col: unknown) => col.name === selectedValue)?.type;
 
     // For waterfall charts, category should be text and value should be numeric
     if (categoryType !== 'text' || valueType !== 'numeric') {
@@ -118,10 +118,10 @@ export default function WaterfallChart() {
     }
 
     // Extract categories and values
-    let data = currentDataset.data.map((item: any) => ({
+    const data = currentDataset.data.map((item: unknown) => ({
       category: item[selectedCategory],
       value: parseFloat(item[selectedValue])
-    })).filter((item: any) => !isNaN(item.value));
+    })).filter((item: unknown) => !isNaN(item.value));
 
     if (data.length === 0) {
       setError('No valid data found for the selected columns');
@@ -130,15 +130,15 @@ export default function WaterfallChart() {
     }
 
     // Sort data by value to make the waterfall more meaningful
-    data.sort((a: any, b: any) => a.value - b.value);
+    data.sort((a: unknown, b: unknown) => a.value - b.value);
 
     // Add a "Total" category at the end
-    const total = data.reduce((sum: number, item: any) => sum + item.value, 0);
+    const total = data.reduce((sum: number, item: unknown) => sum + item.value, 0);
     data.push({ category: 'Total', value: total });
 
     // Calculate running total for the waterfall effect
-    let runningTotal = 0;
-    const waterfallData = data.map((item: any, index: number) => {
+    const runningTotal = 0;
+    const waterfallData = data.map((item: unknown, index: number) => {
       const isTotal = index === data.length - 1;
       const result = {
         category: item.category,
@@ -156,15 +156,15 @@ export default function WaterfallChart() {
     });
 
     // Prepare data for Chart.js
-    const labels = waterfallData.map((item: any) => item.category);
+    const labels = waterfallData.map((item: unknown) => item.category);
     
     // Generate colors based on positive/negative values or total
-    const backgroundColor = waterfallData.map((item: any) => {
+    const backgroundColor = waterfallData.map((item: unknown) => {
       if (item.isTotal) return 'rgba(75, 192, 192, 0.6)'; // Total
       return item.value >= 0 ? 'rgba(54, 162, 235, 0.6)' : 'rgba(255, 99, 132, 0.6)'; // Positive or negative
     });
     
-    const borderColor = waterfallData.map((item: any) => {
+    const borderColor = waterfallData.map((item: unknown) => {
       if (item.isTotal) return 'rgba(75, 192, 192, 1)'; // Total
       return item.value >= 0 ? 'rgba(54, 162, 235, 1)' : 'rgba(255, 99, 132, 1)'; // Positive or negative
     });
@@ -174,13 +174,13 @@ export default function WaterfallChart() {
       datasets: [
         {
           label: 'Waterfall',
-          data: waterfallData.map((item: any) => item.isTotal ? item.value : item.value),
+          data: waterfallData.map((item: unknown) => item.isTotal ? item.value : item.value),
           backgroundColor,
           borderColor,
           borderWidth: 1,
           // Custom properties for the waterfall plugin
-          start: waterfallData.map((item: any) => item.start),
-          isTotal: waterfallData.map((item: any) => item.isTotal),
+          start: waterfallData.map((item: unknown) => item.start),
+          isTotal: waterfallData.map((item: unknown) => item.isTotal),
         },
       ],
     });
@@ -266,7 +266,7 @@ export default function WaterfallChart() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
                 <option value="">Select Category</option>
-                {currentDataset?.columns?.filter((column: any) => column.type === 'text').map((column: any) => (
+                {currentDataset?.columns?.filter((column: unknown) => column.type === 'text').map((column: unknown) => (
                   <option key={column.name} value={column.name}>
                     {column.name} (text)
                   </option>
@@ -285,7 +285,7 @@ export default function WaterfallChart() {
                 onChange={(e) => setSelectedValue(e.target.value)}
               >
                 <option value="">Select Value</option>
-                {currentDataset?.columns?.filter((column: any) => column.type === 'numeric').map((column: any) => (
+                {currentDataset?.columns?.filter((column: unknown) => column.type === 'numeric').map((column: unknown) => (
                   <option key={column.name} value={column.name}>
                     {column.name} (numeric)
                   </option>

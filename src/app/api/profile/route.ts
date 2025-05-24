@@ -4,7 +4,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 // GET endpoint to fetch user profile
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Check authentication
     const session = await getServerSession();
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       userId: new ObjectId(userId) 
     });
 
-    // If profile doesn't exist, return basic info from user
+    // If profile doesn&apos;t exist, return basic info from user
     if (!userProfile) {
       const user = await db.collection('users').findOne({ 
         _id: new ObjectId(userId) 

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     // In a real implementation, you would generate a signature here using crypto
-    // For simplicity, we'll use a fetch request to Cloudinary's API
+    // For simplicity, we&apos;ll use a fetch request to Cloudinary&apos;s API
     
     const formData = new FormData();
     formData.append('public_id', publicId);

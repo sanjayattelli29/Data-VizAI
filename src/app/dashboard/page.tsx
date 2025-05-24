@@ -38,7 +38,7 @@ export default function Dashboard() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="mt-2 text-gray-600">
-          Welcome back, {session?.user?.name || 'User'}! Here's an overview of your data analysis.
+          Welcome back, {session?.user?.name || 'User'}! Here&apos;s an overview of your data analysis.
         </p>
       </div>
 
@@ -118,7 +118,7 @@ export default function Dashboard() {
         ) : datasets.length > 0 ? (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
-              {datasets.slice(0, 5).map((dataset: any) => (
+              {datasets.slice(0, 5).map((dataset: unknown) => (
                 <li key={dataset._id}>
                   <Link href={`/dashboard/data-table?id=${dataset._id}`} className="block hover:bg-gray-50">
                     <div className="px-4 py-4 sm:px-6">

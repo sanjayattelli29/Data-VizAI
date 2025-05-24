@@ -99,11 +99,11 @@ export function calculatePearsonCorrelation(pairs: [number, number][]): number {
     const xMean = mean(xValues);
     const yMean = mean(yValues);
     
-    let numerator = 0;
-    let xDenominator = 0;
-    let yDenominator = 0;
+    const numerator = 0;
+    const xDenominator = 0;
+    const yDenominator = 0;
     
-    for (let i = 0; i < pairs.length; i++) {
+    for (const i = 0; i < pairs.length; i++) {
       const xDiff = xValues[i] - xMean;
       const yDiff = yValues[i] - yMean;
       

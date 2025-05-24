@@ -33,7 +33,7 @@ export default function Header() {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: any) {
+    function handleClickOutside(event: unknown) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }

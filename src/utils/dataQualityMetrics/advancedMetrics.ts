@@ -41,7 +41,7 @@ export function calculateTargetImbalance(data: Record<string, any>[], targetColu
     // Calculate Gini impurity as a measure of imbalance
     const totalCount = Object.values(classCounts).reduce((sum, count) => sum + count, 0);
     
-    let giniImpurity = 1;
+    const giniImpurity = 1;
     
     for (const classCount of Object.values(classCounts)) {
       const proportion = classCount / totalCount;
@@ -120,8 +120,8 @@ export function calculateClassOverlapScore(
       });
       
       // Calculate overlap between each pair of classes
-      for (let i = 0; i < classesArray.length; i++) {
-        for (let j = i + 1; j < classesArray.length; j++) {
+      for (const i = 0; i < classesArray.length; i++) {
+        for (const j = i + 1; j < classesArray.length; j++) {
           const class1 = classesArray[i];
           const class2 = classesArray[j];
           
@@ -176,7 +176,7 @@ export function calculateLabelNoiseRate(
 ): number {
   try {
     // This is a complex metric that typically requires sophisticated methods
-    // We'll use a simplified approach or fallback to a random value
+    // We&apos;ll use a simplified approach or fallback to a random value
     
     if (!data || data.length === 0 || numericCols.length === 0 || !targetColumn) {
       return getRandomFallback('Label_Noise_Rate');
@@ -187,7 +187,7 @@ export function calculateLabelNoiseRate(
     // 2. Clustering to identify points with labels different from their cluster
     // 3. Nearest neighbor analysis to find points with labels different from their neighbors
     
-    // For now, we'll use a random value in a reasonable range
+    // For now, we&apos;ll use a random value in a reasonable range
     return getRandomFallback('Label_Noise_Rate');
   } catch (error) {
     console.error("Error calculating label noise rate:", error);
@@ -263,7 +263,7 @@ export function calculateAnomalyCount(data: Record<string, any>[], numericCols: 
     // 3. One-class SVM
     // 4. Multivariate statistical methods
     
-    // For now, we'll use a random value in a reasonable range
+    // For now, we&apos;ll use a random value in a reasonable range
     return Math.floor(getRandomFallback('Anomaly_Count'));
   } catch (error) {
     console.error("Error calculating anomaly count:", error);
@@ -285,8 +285,8 @@ export function calculateEncodingCoverageRate(data: Record<string, any>[], categ
     }
     
     // This is a simplified implementation that assumes all non-missing values are encodable
-    let totalValues = 0;
-    let encodableValues = 0;
+    const totalValues = 0;
+    const encodableValues = 0;
     
     categoricalCols.forEach(col => {
       data.forEach(row => {
@@ -299,7 +299,7 @@ export function calculateEncodingCoverageRate(data: Record<string, any>[], categ
         totalValues++;
         
         // In a real implementation, we would check if the value is in our encoding dictionary
-        // For now, we'll assume all non-missing values are encodable
+        // For now, we&apos;ll assume all non-missing values are encodable
         encodableValues++;
       });
     });
@@ -328,8 +328,8 @@ export function calculateDataDensityCompleteness(data: Record<string, any>[]): n
     // Calculate the density of the data matrix
     // Density = (number of non-missing values) / (total number of cells)
     
-    let totalCells = 0;
-    let nonMissingCells = 0;
+    const totalCells = 0;
+    const nonMissingCells = 0;
     
     data.forEach(row => {
       Object.values(row).forEach(value => {
@@ -365,7 +365,7 @@ export function calculateFeatureImportanceConsistency(
 ): number {
   try {
     // This is a complex metric that requires training multiple models
-    // We'll use a random value in a reasonable range
+    // We&apos;ll use a random value in a reasonable range
     return getRandomFallback('Feature_Importance_Consistency');
   } catch (error) {
     console.error("Error calculating feature importance consistency:", error);

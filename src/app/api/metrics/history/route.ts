@@ -24,8 +24,14 @@ export async function GET(req: NextRequest) {
     // Connect to MongoDB
     const { db } = await connectToDatabase();
 
+    // Define query interface
+    interface MetricsQuery {
+      userId: string;
+      datasetId?: string;
+    }
+    
     // Build query
-    const query: any = { userId };
+    const query: MetricsQuery = { userId };
     if (datasetId) {
       query.datasetId = datasetId;
     }
@@ -38,7 +44,7 @@ export async function GET(req: NextRequest) {
       .toArray();
 
     // If datasetId is provided, also fetch the dataset details
-    let datasetDetails = null;
+    const datasetDetails = null;
     if (datasetId) {
       datasetDetails = await db.collection('datasets')
         .findOne({ _id: datasetId, userId });

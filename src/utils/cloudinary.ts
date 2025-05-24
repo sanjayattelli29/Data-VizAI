@@ -42,7 +42,7 @@ export async function uploadToCloudinary(base64Image: string, folder: string = '
 // Function to delete an image from Cloudinary
 export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
   try {
-    // For security reasons, we'll use a server API route to delete the image
+    // For security reasons, we&apos;ll use a server API route to delete the image
     const response = await fetch('/api/cloudinary/delete', {
       method: 'POST',
       headers: {

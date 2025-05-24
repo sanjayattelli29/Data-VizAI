@@ -49,20 +49,20 @@ export default function RadarChart() {
           
           // If a dataset ID is provided in the URL, load that dataset
           if (datasetId && data.length > 0) {
-            const selectedDataset = data.find((d: any) => d._id === datasetId);
+            const selectedDataset = data.find((d: unknown) => d._id === datasetId);
             if (selectedDataset) {
               setCurrentDataset(selectedDataset);
               
               // Set default category and metrics based on column types
-              const categoryColumn = selectedDataset.columns.find((col: any) => col.type === 'text');
-              const numericColumns = selectedDataset.columns.filter((col: any) => col.type === 'numeric');
+              const categoryColumn = selectedDataset.columns.find((col: unknown) => col.type === 'text');
+              const numericColumns = selectedDataset.columns.filter((col: unknown) => col.type === 'numeric');
               
               setAvailableMetrics(numericColumns);
               
               if (categoryColumn) setSelectedCategory(categoryColumn.name);
               if (numericColumns.length > 0) {
                 // Select up to 5 metrics by default
-                setSelectedMetrics(numericColumns.slice(0, 5).map((col: any) => col.name));
+                setSelectedMetrics(numericColumns.slice(0, 5).map((col: unknown) => col.name));
               }
             } else {
               // If the dataset with the provided ID is not found, load the first dataset
@@ -75,7 +75,7 @@ export default function RadarChart() {
         } else {
           throw new Error('Failed to fetch datasets');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setError(error.message || 'An error occurred while fetching datasets');
       } finally {
         setIsLoading(false);
@@ -88,16 +88,16 @@ export default function RadarChart() {
   useEffect(() => {
     if (currentDataset) {
       // Update available metrics when dataset changes
-      const numericColumns = currentDataset.columns.filter((col: any) => col.type === 'numeric');
+      const numericColumns = currentDataset.columns.filter((col: unknown) => col.type === 'numeric');
       setAvailableMetrics(numericColumns);
       
       // Set default category based on column types
-      const categoryColumn = currentDataset.columns.find((col: any) => col.type === 'text');
+      const categoryColumn = currentDataset.columns.find((col: unknown) => col.type === 'text');
       if (categoryColumn) setSelectedCategory(categoryColumn.name);
       
       // Select up to 5 metrics by default
       if (numericColumns.length > 0) {
-        setSelectedMetrics(numericColumns.slice(0, 5).map((col: any) => col.name));
+        setSelectedMetrics(numericColumns.slice(0, 5).map((col: unknown) => col.name));
       }
     }
   }, [currentDataset]);
@@ -128,7 +128,7 @@ export default function RadarChart() {
     if (!currentDataset || !selectedCategory || selectedMetrics.length === 0) return;
 
     // Get unique categories
-    const uniqueCategories = [...new Set(currentDataset.data.map((item: any) => item[selectedCategory]))];
+    const uniqueCategories = [...new Set(currentDataset.data.map((item: unknown) => item[selectedCategory]))];
     
     if (uniqueCategories.length === 0) {
       setError('No valid categories found in the selected column');
@@ -149,11 +149,11 @@ export default function RadarChart() {
 
     // Calculate average values for each category and metric
     const datasets = uniqueCategories.map((category, index) => {
-      const categoryData = currentDataset.data.filter((item: any) => item[selectedCategory] === category);
+      const categoryData = currentDataset.data.filter((item: unknown) => item[selectedCategory] === category);
       
       const data = selectedMetrics.map(metric => {
         const values = categoryData
-          .map((item: any) => parseFloat(item[metric]))
+          .map((item: unknown) => parseFloat(item[metric]))
           .filter((value: number) => !isNaN(value));
         
         // Calculate average or return 0 if no valid values
@@ -257,7 +257,7 @@ export default function RadarChart() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
                 <option value="">Select Category</option>
-                {currentDataset?.columns?.filter((column: any) => column.type === 'text').map((column: any) => (
+                {currentDataset?.columns?.filter((column: unknown) => column.type === 'text').map((column: unknown) => (
                   <option key={column.name} value={column.name}>
                     {column.name} (text)
                   </option>

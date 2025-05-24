@@ -44,7 +44,7 @@ export default function SignUp() {
       }
 
       router.push('/auth/signin?registered=true');
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error.message || 'An error occurred. Please try again.');
       setIsLoading(false);
     }

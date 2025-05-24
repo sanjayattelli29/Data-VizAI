@@ -27,7 +27,7 @@ export default function DataTable() {
           
           // If a dataset ID is provided in the URL, load that dataset
           if (datasetId && data.length > 0) {
-            const selectedDataset = data.find((d: any) => d._id === datasetId);
+            const selectedDataset = data.find((d: unknown) => d._id === datasetId);
             if (selectedDataset) {
               setCurrentDataset(selectedDataset);
             } else {
@@ -41,7 +41,7 @@ export default function DataTable() {
         } else {
           throw new Error('Failed to fetch datasets');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setError(error.message || 'An error occurred while fetching datasets');
       } finally {
         setIsLoading(false);
@@ -181,7 +181,7 @@ export default function DataTable() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    {currentDataset.columns?.map((column: any, index: number) => (
+                    {currentDataset.columns?.map((column: unknown, index: number) => (
                       <th
                         key={index}
                         scope="col"
@@ -196,9 +196,9 @@ export default function DataTable() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {currentItems.map((row: any, rowIndex: number) => (
+                  {currentItems.map((row: unknown, rowIndex: number) => (
                     <tr key={rowIndex}>
-                      {currentDataset.columns?.map((column: any, colIndex: number) => (
+                      {currentDataset.columns?.map((column: unknown, colIndex: number) => (
                         <td
                           key={colIndex}
                           className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"

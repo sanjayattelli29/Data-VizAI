@@ -127,7 +127,7 @@ export default function UploadDataset() {
           throw new Error(`Error parsing CSV: ${error.message}`);
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error.message || 'An error occurred while uploading the dataset.');
     } finally {
       setIsUploading(false);
@@ -135,16 +135,16 @@ export default function UploadDataset() {
   };
 
   // Function to determine column types (text, numeric, or mixed)
-  const determineColumnTypes = (data: any[], columns: string[]) => {
+  const determineColumnTypes = (data: unknown[], columns: string[]) => {
     const columnTypes: Record<string, 'text' | 'numeric' | 'mixed'> = {};
 
     columns.forEach(column => {
-      let isNumeric = true;
-      let isText = true;
+      const isNumeric = true;
+      const isText = true;
 
       // Check first 100 rows or all rows if less than 100
       const sampleSize = Math.min(data.length, 100);
-      for (let i = 0; i < sampleSize; i++) {
+      for (const i = 0; i < sampleSize; i++) {
         const value = data[i][column];
         
         // Skip empty values
@@ -157,7 +157,7 @@ export default function UploadDataset() {
           isNumeric = false;
         }
         
-        // If we've found both numeric and non-numeric values, it's mixed
+        // If we&apos;ve found both numeric and non-numeric values, it&apos;s mixed
         if (!isNumeric && !isText) {
           columnTypes[column] = 'mixed';
           break;

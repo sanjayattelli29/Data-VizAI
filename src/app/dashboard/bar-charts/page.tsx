@@ -54,13 +54,13 @@ export default function BarCharts() {
           
           // If a dataset ID is provided in the URL, load that dataset
           if (datasetId && data.length > 0) {
-            const selectedDataset = data.find((d: any) => d._id === datasetId);
+            const selectedDataset = data.find((d: unknown) => d._id === datasetId);
             if (selectedDataset) {
               setCurrentDataset(selectedDataset);
               
               // Set default X and Y axes based on column types
-              const textColumn = selectedDataset.columns.find((col: any) => col.type === 'text');
-              const numericColumn = selectedDataset.columns.find((col: any) => col.type === 'numeric');
+              const textColumn = selectedDataset.columns.find((col: unknown) => col.type === 'text');
+              const numericColumn = selectedDataset.columns.find((col: unknown) => col.type === 'numeric');
               
               if (textColumn) setSelectedXAxis(textColumn.name);
               if (numericColumn) setSelectedYAxis(numericColumn.name);
@@ -75,7 +75,7 @@ export default function BarCharts() {
         } else {
           throw new Error('Failed to fetch datasets');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         setError(error.message || 'An error occurred while fetching datasets');
       } finally {
         setIsLoading(false);
@@ -102,8 +102,8 @@ export default function BarCharts() {
       setSelectedYAxis('');
       
       // Set default X and Y axes based on column types
-      const textColumn = selected.columns.find((col: any) => col.type === 'text');
-      const numericColumn = selected.columns.find((col: any) => col.type === 'numeric');
+      const textColumn = selected.columns.find((col: unknown) => col.type === 'text');
+      const numericColumn = selected.columns.find((col: unknown) => col.type === 'numeric');
       
       if (textColumn) setSelectedXAxis(textColumn.name);
       if (numericColumn) setSelectedYAxis(numericColumn.name);
@@ -135,8 +135,8 @@ export default function BarCharts() {
       const metrics = {
         Dataset_Size: currentDataset.data.length,
         Column_Count: currentDataset.columns.length,
-        Numeric_Columns: currentDataset.columns.filter((col: any) => col.type === 'numeric').length,
-        Text_Columns: currentDataset.columns.filter((col: any) => col.type === 'text').length,
+        Numeric_Columns: currentDataset.columns.filter((col: unknown) => col.type === 'numeric').length,
+        Text_Columns: currentDataset.columns.filter((col: unknown) => col.type === 'text').length,
         Date_Created: new Date().toISOString(),
         Chart_Type: 'Bar Chart',
         X_Axis: selectedXAxis,
@@ -161,7 +161,7 @@ export default function BarCharts() {
       } else {
         throw new Error(saveResult.message);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving chart:', error);
       setError(error.message || 'Failed to save chart');
     } finally {
@@ -172,8 +172,8 @@ export default function BarCharts() {
   const generateChartData = () => {
     if (!currentDataset || !selectedXAxis || !selectedYAxis) return;
 
-    const xAxisType = currentDataset.columns.find((col: any) => col.name === selectedXAxis)?.type;
-    const yAxisType = currentDataset.columns.find((col: any) => col.name === selectedYAxis)?.type;
+    const xAxisType = currentDataset.columns.find((col: unknown) => col.name === selectedXAxis)?.type;
+    const yAxisType = currentDataset.columns.find((col: unknown) => col.name === selectedYAxis)?.type;
 
     // For bar charts, X-axis should be categorical (text) and Y-axis should be numeric
     if (yAxisType !== 'numeric') {
@@ -185,7 +185,7 @@ export default function BarCharts() {
     // Group data by X-axis values and calculate aggregate Y-axis values
     const groupedData: Record<string, number[]> = {};
     
-    currentDataset.data.forEach((item: any) => {
+    currentDataset.data.forEach((item: unknown) => {
       const xValue = item[selectedXAxis]?.toString() || 'Undefined';
       const yValue = parseFloat(item[selectedYAxis]);
       
@@ -306,8 +306,8 @@ export default function BarCharts() {
               >
                 <option value="" className="font-medium text-gray-900">Select X-Axis</option>
                 {currentDataset?.columns
-                  .filter((col: any) => col.type === 'text' || col.type === 'mixed')
-                  .map((col: any) => (
+                  .filter((col: unknown) => col.type === 'text' || col.type === 'mixed')
+                  .map((col: unknown) => (
                     <option key={col.name} value={col.name} className="font-medium text-gray-900">
                       {col.name}
                     </option>
@@ -327,8 +327,8 @@ export default function BarCharts() {
               >
                 <option value="" className="font-medium text-gray-900">Select Y-Axis</option>
                 {currentDataset?.columns
-                  .filter((col: any) => col.type === 'numeric')
-                  .map((col: any) => (
+                  .filter((col: unknown) => col.type === 'numeric')
+                  .map((col: unknown) => (
                     <option key={col.name} value={col.name} className="font-medium text-gray-900">
                       {col.name}
                     </option>

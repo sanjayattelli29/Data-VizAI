@@ -32,8 +32,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Upload history not found' }, { status: 404 });
     }
 
+    // Define interface for graph object
+    interface Graph {
+      publicId: string;
+      url: string;
+    }
+    
     // Delete images from Cloudinary
-    const deletePromises = history.graphUrls.map((graph: any) => 
+    const deletePromises = history.graphUrls.map((graph: Graph) => 
       deleteFromCloudinary(graph.publicId)
     );
     

@@ -9,9 +9,8 @@ const nextConfig = {
       'res.cloudinary.com'
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['mongoose'],
-  },
+  // Use the correct configuration for Next.js 15+
+  transpilePackages: ['mongoose'],
 }
 
 module.exports = nextConfig
