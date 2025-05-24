@@ -1,24 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smart Dataset Analyzer
+
+A modern SaaS web application that automatically generates insightful visualizations from your datasets. Upload your data and get instant analysis with beautiful graphs for text, numeric, and mixed data types.
+
+Built with Next.js, TypeScript, MongoDB, and Chart.js.
+
+## Features
+
+- **Automatic Data Type Detection**: Automatically identifies text, numeric, and mixed data types in your dataset
+- **Smart Visualization Selection**: Selects the most appropriate chart type based on your data
+- **Interactive Dashboards**: Create beautiful, interactive dashboards with multiple visualizations
+- **User Authentication**: Secure user authentication with NextAuth.js
+- **Responsive Design**: Modern UI that works on desktop and mobile devices
+- **Data Table View**: View your uploaded data in a paginated table format
+- **Bar Charts & Pie Charts**: Visualize your data with customizable charts
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 14.x or later
+- MongoDB database (you can use MongoDB Atlas for a free cloud database)
+
+### Environment Setup
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+MONGODB_URI=your_mongodb_connection_string
+DB_NAME=your_database_name
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Install dependencies
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Run the development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
+
+## Usage
+
+1. Register for an account or sign in
+2. Navigate to the dashboard
+3. Upload a CSV dataset using the upload page
+4. View your data in the data table view
+5. Generate visualizations using the bar chart and pie chart pages
 
 ## Learn More
 
