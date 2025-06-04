@@ -116,14 +116,6 @@ export default function Header() {
                 Dashboard
               </Link>
 
-              {/* Profile Button */}
-              <Link href="/profile">
-                <button className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg text-sm font-medium">
-                  <UserCircleIcon className="w-4 h-4 mr-2" />
-                  Profile
-                </button>
-              </Link>
-
               {/* User Avatar Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -216,8 +208,9 @@ export default function Header() {
                     <div className="py-2 border-t border-gray-100">
                       <button
                         className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
-                        onClick={() => {
-                          signOut({ callbackUrl: '/' });
+                        onClick={async () => {
+                          await signOut({ redirect: false });
+                          window.location.href = '/auth/signin';
                           setDropdownOpen(false);
                         }}
                       >
@@ -336,8 +329,9 @@ export default function Header() {
                         Profile
                       </Link>
                       <button
-                        onClick={() => {
-                          signOut({ callbackUrl: '/' });
+                        onClick={async () => {
+                          await signOut({ redirect: false });
+                          window.location.href = '/auth/signin';
                           setMobileMenuOpen(false);
                         }}
                         className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-red-600 hover:bg-red-50 w-full text-left"

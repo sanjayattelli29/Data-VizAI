@@ -211,7 +211,7 @@ export default function Header() {
                         <button
                           className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
                           onClick={() => {
-                            signOut();
+                            signOut({ callbackUrl: 'https://dataviz-ai.netlify.app/' });
                             setDropdownOpen(false);
                           }}
                         >
