@@ -17,8 +17,8 @@ export function calculateMissingValuesPct(data: Record<string, any>[]): number {
   try {
     if (!data || data.length === 0) return getRandomFallback('Missing_Values_Pct');
     
-    const totalCells = 0;
-    const missingCells = 0;
+    let totalCells = 0;
+    let missingCells = 0;
     
     data.forEach(row => {
       Object.values(row).forEach(value => {
