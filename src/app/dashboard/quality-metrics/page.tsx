@@ -1,6 +1,5 @@
 'use client';
 
-import { getAllMetrics, QualityMetric } from '@/utils/dataQualityMetrics';
 import { Dataset as DatasetType } from '@/utils/dataQualityMetrics/types';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState, useCallback } from 'react';
@@ -63,6 +62,19 @@ const adaptDatasetForMetrics = (dataset: Dataset): DatasetType => {
   };
 };
 
+const convertToCSV = (dataset: Dataset): string => {
+  const headers = dataset.columns.map(col => col.name).join(',') + '\n';
+  const rows = dataset.data.map(row => 
+    dataset.columns.map(col => 
+      typeof row[col.name] === 'string' 
+        ? '"' + row[col.name].replace(/"/g, '""') + '"'
+        : row[col.name]
+    ).join(',')
+  ).join('\n');
+  
+  return headers + rows;
+};
+
 export default function QualityMetrics() {
   const searchParams = useSearchParams();
   const datasetId = searchParams.get('id');
@@ -70,7 +82,38 @@ export default function QualityMetrics() {
   
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [currentDataset, setCurrentDataset] = useState<Dataset | null>(null);
-  const [metrics, setMetrics] = useState<QualityMetric[]>([]);
+  // Keep this list exactly in sync with backend input_features!
+  const inputFeatures = [
+    "Row_Count",
+    "Column_Count",
+    "File_Size_MB",
+    "Numeric_Columns_Count",
+    "Categorical_Columns_Count",
+    "Date_Columns_Count",
+    "Missing_Values_Pct",
+    "Duplicate_Records_Count",
+    "Outlier_Rate",
+    "Inconsistency_Rate",
+    "Data_Type_Mismatch_Rate",
+    "Null_vs_NaN_Distribution",
+    "Cardinality_Categorical",
+    "Target_Imbalance",
+    "Feature_Importance_Consistency",
+    "Class_Overlap_Score",
+    "Label_Noise_Rate",
+    "Feature_Correlation_Mean",
+    "Range_Violation_Rate",
+    "Mean_Median_Drift",
+    "Data_Freshness",
+    "Anomaly_Count",
+    "Encoding_Coverage_Rate",
+    "Variance_Threshold_Check",
+    "Data_Density_Completeness",
+    "Domain_Constraint_Violations"
+  ];
+
+// Always store metrics as a Record<string, number|string|null>
+const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -86,22 +129,49 @@ export default function QualityMetrics() {
       setIsLoading(true);
       setMetricsSaved(false);
       
-      const formattedDataset = adaptDatasetForMetrics(dataset);
-      const calculatedMetrics = getAllMetrics(formattedDataset);
-      setMetrics(calculatedMetrics);
+      // Convert dataset to CSV format
+      const csvData = convertToCSV(dataset);
+      
+      // Send dataset to Render Python backend
+      const response = await fetch('https://metric-models-dataviz.onrender.com/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          datasetId: dataset._id,
+          csvData,
+          datasetName: dataset.name,
+          timestamp: new Date().toISOString()
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze dataset');
+      }
+
+      const metricsArray = await response.json();
+      console.log('[DEBUG] Received metricsArray from backend:', metricsArray);
+      // Convert array of {name, value} to an object with all inputFeatures as keys
+      const metricsObj: Record<string, number|string|null> = {};
+      inputFeatures.forEach(key => {
+        const found = Array.isArray(metricsArray) ? metricsArray.find(m => m.name === key) : undefined;
+        metricsObj[key] = found ? found.value : null;
+      });
+      setMetrics(metricsObj); // UI will show metrics even if some are null (handled in display)
       
       // Save metrics to MongoDB if user is authenticated
       if (session?.user?.id) {
-        await saveMetricsToMongoDB(dataset._id, calculatedMetrics);
+        await saveMetricsToMongoDB(dataset._id, metrics);
       }
     } catch (error) {
-      console.error('Error generating metrics:', error);
+      console.error('Error analyzing dataset:', error);
       if (error instanceof Error) {
         setError(error.message);
         toast.error(error.message);
       } else {
-        setError('Failed to generate metrics. Please try again.');
-        toast.error('Failed to generate metrics. Please try again.');
+        setError('Failed to analyze dataset. Please try again.');
+        toast.error('Failed to analyze dataset. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -122,16 +192,16 @@ export default function QualityMetrics() {
             const selectedDataset = data.find(d => d._id === datasetId);
             if (selectedDataset) {
               setCurrentDataset(selectedDataset);
-              await generateMetrics(selectedDataset);
+              // Wait for user action to analyze
             } else {
               // If the dataset with the provided ID is not found, load the first dataset
               setCurrentDataset(data[0]);
-              await generateMetrics(data[0]);
+              // Analysis will be triggered when user selects a dataset
             }
           } else if (data.length > 0) {
             // If no dataset ID is provided, load the first dataset
             setCurrentDataset(data[0]);
-            await generateMetrics(data[0]);
+            // Analysis will be triggered on user selection
           }
         } else {
           throw new Error('Failed to fetch datasets');
@@ -159,16 +229,14 @@ export default function QualityMetrics() {
     }
   };
 
-  const saveMetricsToMongoDB = async (datasetId: string, metrics: QualityMetric[]) => {
+  const saveMetricsToMongoDB = async (datasetId: string, metrics: Record<string, number | string | null>) => {
     if (!session?.user?.id) return;
     
     try {
       setIsSaving(true);
       
-      const metricsRecord: Record<string, number | string> = {};
-      metrics.forEach(metric => {
-        metricsRecord[metric.name] = metric.value;
-      });
+      // metrics is already an object (Record<string, number|string|null>)
+      const metricsRecord = { ...metrics };
       
       const response = await fetch('/api/metrics/save', {
         method: 'POST',
@@ -201,37 +269,41 @@ export default function QualityMetrics() {
     }
   };
 
+
   const filterMetricsByCategory = (category: string) => {
-    if (category === 'all') {
-      return metrics;
+  // Convert metrics object to array of {name, value}
+  const metricsArray = Object.entries(metrics).map(([name, value]) => ({ name, value }));
+
+  if (category === 'all') {
+    return metricsArray;
+  }
+
+  return metricsArray.filter(metric => {
+    switch (category) {
+      case 'data_structure':
+        return metric.name.includes('Column') || 
+               metric.name.includes('Row') || 
+               metric.name.includes('Size');
+      case 'data_quality':
+        return metric.name.includes('Quality') || 
+               metric.name.includes('Missing') || 
+               metric.name.includes('Duplicate') || 
+               metric.name.includes('Outlier');
+      case 'statistical':
+        return metric.name.includes('Mean') || 
+               metric.name.includes('Distribution') || 
+               metric.name.includes('Correlation');
+      case 'advanced':
+        return metric.name.includes('Feature') || 
+               metric.name.includes('Label') || 
+               metric.name.includes('Class');
+      default:
+        return true;
     }
+  });
+};
 
-    return metrics.filter(metric => {
-      switch (category) {
-        case 'data_structure':
-          return metric.name.includes('Column') || 
-                 metric.name.includes('Row') || 
-                 metric.name.includes('Size');
-        case 'data_quality':
-          return metric.name.includes('Quality') || 
-                 metric.name.includes('Missing') || 
-                 metric.name.includes('Duplicate') || 
-                 metric.name.includes('Outlier');
-        case 'statistical':
-          return metric.name.includes('Mean') || 
-                 metric.name.includes('Distribution') || 
-                 metric.name.includes('Correlation');
-        case 'advanced':
-          return metric.name.includes('Feature') || 
-                 metric.name.includes('Label') || 
-                 metric.name.includes('Class');
-        default:
-          return true;
-      }
-    });
-  };
-
-  const prepareMetricsForAnalysis = (metrics: QualityMetric[]) => {
+  const prepareMetricsForAnalysis = (metrics: any[]) => {
     const metricsData: Record<string, number> = {
       Row_Count: 0,
       Column_Count: 0,
@@ -262,13 +334,13 @@ export default function QualityMetrics() {
     };
 
     // Map our metrics to the expected format
-    metrics.forEach(metric => {
-      const value = typeof metric.value === 'string' ? parseFloat(metric.value) : metric.value;
-      if (isNaN(value)) return;
+    Object.entries(metrics).forEach(([name, value]) => {
+      const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+      if (isNaN(numericValue)) return;
 
-      switch(metric.name) {
+      switch(name) {
         case 'rowCount':
-          metricsData.Row_Count = value;
+          metricsData.Row_Count = numericValue;
           break;
         case 'columnCount':
           metricsData.Column_Count = value;
@@ -414,7 +486,7 @@ export default function QualityMetrics() {
                         </div>
                         <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                           <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 2 0 002 2h2a2 2 0 002-2V7m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2V7m0 10a2 2 0 012-2h2a2 2 0 012 2m-1 4l-3 3m0 0l-3-3m3 3V4" />
                           </svg>
                         </div>
                       </div>
