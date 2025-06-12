@@ -1,14 +1,11 @@
 'use client';
 
-import { Dataset as DatasetType } from '@/utils/dataQualityMetrics/types';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
-// Define additional types
 interface Dataset {
   _id: string;
   name: string;
@@ -19,108 +16,132 @@ interface Dataset {
   data: Record<string, string | number>[];
 }
 
-interface MLAnalysisResult {
-  overall_score: number;
-  quality_label: string;
-  label_probabilities: Record<string, number>;
-  top_issues: Record<string, number>;
-  metric_scores: Record<string, number>;
-  prediction_time: string;
-  metrics_capped?: Record<string, number>;
-}
-
-// At the top of the file, after imports
-interface MetricStatus {
-  label: string;
-  color: string;
-  emoji: string;
-}
-
-const getMetricStatus = (score: number): MetricStatus => {
-  if (score >= 90) {
-    return { label: 'Excellent', color: 'green', emoji: '🟢' };
-  }
-  if (score >= 70) {
-    return { label: 'Good', color: 'blue', emoji: '🔵' };
-  }
-  if (score >= 50) {
-    return { label: 'Moderate', color: 'yellow', emoji: '🟡' };
-  }
-  return { label: 'Poor', color: 'red', emoji: '🔴' };
-};
-
-// Helper function to convert Dataset to DatasetType
-const adaptDatasetForMetrics = (dataset: Dataset): DatasetType => {
-  return {
-    _id: dataset._id,
-    name: dataset.name,
-    columns: dataset.columns.map(col => ({
-      name: col.name,
-      type: col.type
-    })),
-    data: dataset.data
-  };
-};
-
-const convertToCSV = (dataset: Dataset): string => {
-  const headers = dataset.columns.map(col => col.name).join(',') + '\n';
-  const rows = dataset.data.map(row => 
-    dataset.columns.map(col => 
-      typeof row[col.name] === 'string' 
-        ? '"' + row[col.name].replace(/"/g, '""') + '"'
-        : row[col.name]
-    ).join(',')
-  ).join('\n');
-  
-  return headers + rows;
-};
-
 export default function QualityMetrics() {
-  const searchParams = useSearchParams();
-  const datasetId = searchParams.get('id');
   const { data: session } = useSession();
-  
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [currentDataset, setCurrentDataset] = useState<Dataset | null>(null);
-  // Keep this list exactly in sync with backend input_features!
-  const inputFeatures = [
-    "Row_Count",
-    "Column_Count",
-    "File_Size_MB",
-    "Numeric_Columns_Count",
-    "Categorical_Columns_Count",
-    "Date_Columns_Count",
-    "Missing_Values_Pct",
-    "Duplicate_Records_Count",
-    "Outlier_Rate",
-    "Inconsistency_Rate",
-    "Data_Type_Mismatch_Rate",
-    "Null_vs_NaN_Distribution",
-    "Cardinality_Categorical",
-    "Target_Imbalance",
-    "Feature_Importance_Consistency",
-    "Class_Overlap_Score",
-    "Label_Noise_Rate",
-    "Feature_Correlation_Mean",
-    "Range_Violation_Rate",
-    "Mean_Median_Drift",
-    "Data_Freshness",
-    "Anomaly_Count",
-    "Encoding_Coverage_Rate",
-    "Variance_Threshold_Check",
-    "Data_Density_Completeness",
-    "Domain_Constraint_Violations"
-  ];
-
-// Always store metrics as a Record<string, number|string|null>
-const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
+  const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<string>('all');
   const [metricsSaved, setMetricsSaved] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [mlAnalysisResults, setMlAnalysisResults] = useState<MLAnalysisResult | null>(null);
+
+  const convertToCSV = (dataset: Dataset): string => {
+    const headers = dataset.columns.map(col => col.name).join(',') + '\n';
+    const rows = dataset.data.map(row => 
+      dataset.columns.map(col => {
+        const value = row[col.name];
+        if (typeof value === 'string') {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      }).join(',')
+    ).join('\n');
+    
+    return headers + rows;
+  };
+
+  interface MetricCategory {
+    name: string;
+    metrics: string[];
+  }
+
+  const metricCategories: MetricCategory[] = [
+    {
+      name: 'data_structure',
+      metrics: [
+        'Row_Count',
+        'Column_Count',
+        'File_Size_MB',
+        'Numeric_Columns_Count',
+        'Categorical_Columns_Count',
+        'Date_Columns_Count'
+      ]
+    },
+    {
+      name: 'data_quality',
+      metrics: [
+        'Missing_Values_Pct',
+        'Duplicate_Records_Count',
+        'Outlier_Rate',
+        'Inconsistency_Rate',
+        'Data_Type_Mismatch_Rate',
+        'Data_Quality_Score',
+        'Data_Density_Completeness',
+        'Domain_Constraint_Violations'
+      ]
+    },
+    {
+      name: 'statistical',
+      metrics: [
+        'Mean_Median_Drift',
+        'Feature_Correlation_Mean',
+        'Null_vs_NaN_Distribution',
+        'Variance_Threshold_Check',
+        'Range_Violation_Rate'
+      ]
+    },
+    {
+      name: 'advanced',
+      metrics: [
+        'Feature_Importance_Consistency',
+        'Class_Overlap_Score',
+        'Label_Noise_Rate',
+        'Target_Imbalance',
+        'Encoding_Coverage_Rate',
+        'Cardinality_Categorical',
+        'Data_Freshness',
+        'Anomaly_Count'
+      ]
+    }
+  ];
+
+  const filterMetricsByCategory = (metrics: Record<string, number|string|null>, category: string): Array<{name: string, value: number|string|null}> => {
+    if (category === 'all') {
+      return Object.entries(metrics).map(([name, value]) => ({ name, value }));
+    }
+
+    const categoryMetrics = metricCategories.find(cat => cat.name === category)?.metrics || [];
+    return Object.entries(metrics)
+      .filter(([name]) => categoryMetrics.includes(name))
+      .map(([name, value]) => ({ name, value }));
+  };
+
+  const formatMetricValue = (value: number | string | null): string => {
+    if (value === null) return 'N/A';
+    if (typeof value === 'number') {
+      if (value > 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+      return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    }
+    return value.toString();
+  };
+
+  const getMetricColor = (name: string, value: number | string | null): string => {
+    if (value === null) return 'gray.400';
+    if (typeof value !== 'number') return 'gray.600';
+
+    // Define thresholds for different metrics
+    const thresholds: Record<string, [number, number]> = {
+      'Missing_Values_Pct': [5, 20],
+      'Duplicate_Records_Count': [10, 50],
+      'Outlier_Rate': [0.05, 0.15],
+      'Data_Quality_Score': [70, 90],
+      'Data_Density_Completeness': [0.8, 0.95]
+    };
+
+    const [warning, danger] = thresholds[name] || [0.5, 0.8];
+    
+    if (name === 'Data_Quality_Score') {
+      return value >= danger ? 'green.500' 
+           : value >= warning ? 'yellow.500' 
+           : 'red.500';
+    }
+
+    return value <= warning ? 'green.500' 
+         : value <= danger ? 'yellow.500' 
+         : 'red.500';
+  };
 
   const generateMetrics = useCallback(async (dataset: Dataset) => {
     if (!dataset) return;
@@ -132,17 +153,17 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
       // Convert dataset to CSV format
       const csvData = convertToCSV(dataset);
       
-      // Send dataset to Render Python backend
-      const response = await fetch('https://metric-models-dataviz.onrender.com/analyze', {
+      // Send dataset to Flask backend
+      const response = await fetch('http://127.0.0.1:1289/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           datasetId: dataset._id,
-          csvData,
           datasetName: dataset.name,
-          timestamp: new Date().toISOString()
+          csvData,
+          targetColumn: null
         }),
       });
 
@@ -150,20 +171,15 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
         throw new Error('Failed to analyze dataset');
       }
 
-      const metricsArray = await response.json();
-      console.log('[DEBUG] Received metricsArray from backend:', metricsArray);
-      // Convert array of {name, value} to an object with all inputFeatures as keys
-      const metricsObj: Record<string, number|string|null> = {};
-      inputFeatures.forEach(key => {
-        const found = Array.isArray(metricsArray) ? metricsArray.find(m => m.name === key) : undefined;
-        metricsObj[key] = found ? found.value : null;
-      });
-      setMetrics(metricsObj); // UI will show metrics even if some are null (handled in display)
+      const result = await response.json();
+      console.log('[DEBUG] Received result from backend:', result);
       
-      // Save metrics to MongoDB if user is authenticated
-      if (session?.user?.id) {
-        await saveMetricsToMongoDB(dataset._id, metrics);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to analyze dataset');
       }
+
+      setMetrics(result.metrics);
+      
     } catch (error) {
       console.error('Error analyzing dataset:', error);
       if (error instanceof Error) {
@@ -176,68 +192,74 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id]);
+  }, []);
+
+  const handleDatasetSelect = async (dataset: Dataset | null) => {
+    setCurrentDataset(dataset);
+    if (dataset) {
+      try {
+        setIsLoading(true);
+        const response = await fetch('https://metric-models-dataviz.onrender.com/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            data: dataset.data,
+            columns: dataset.columns
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch metrics');
+        }
+
+        const metricsData = await response.json();
+        setMetrics(metricsData);
+        setError('');
+      } catch (err) {
+        setError('Failed to generate metrics. Please try again.');
+        console.error('Error generating metrics:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setMetrics({});
+    }
+  };
 
   useEffect(() => {
     const fetchDatasets = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch('/api/datasets');
-        if (response.ok) {
-          const data: Dataset[] = await response.json();
-          setDatasets(data);
-          
-          // If a dataset ID is provided in the URL, load that dataset
-          if (datasetId && data.length > 0) {
-            const selectedDataset = data.find(d => d._id === datasetId);
-            if (selectedDataset) {
-              setCurrentDataset(selectedDataset);
-              // Wait for user action to analyze
-            } else {
-              // If the dataset with the provided ID is not found, load the first dataset
-              setCurrentDataset(data[0]);
-              // Analysis will be triggered when user selects a dataset
-            }
-          } else if (data.length > 0) {
-            // If no dataset ID is provided, load the first dataset
-            setCurrentDataset(data[0]);
-            // Analysis will be triggered on user selection
+      if (session?.user?.id) {
+        try {
+          setIsLoading(true);
+          // Replace with your actual API endpoint
+          const response = await fetch('/api/datasets');
+          if (!response.ok) {
+            throw new Error('Failed to fetch datasets');
           }
-        } else {
-          throw new Error('Failed to fetch datasets');
+          const data = await response.json();
+          setDatasets(data);
+        } catch (err) {
+          setError('Failed to fetch datasets. Please try again.');
+          console.error('Error fetching datasets:', err);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError('An error occurred while fetching datasets');
-        }
-      } finally {
-        setIsLoading(false);
       }
     };
 
     fetchDatasets();
-  }, [datasetId, generateMetrics]);
-
-  const handleDatasetChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedId = e.target.value;
-    const selected = datasets.find(d => d._id === selectedId);
-    if (selected) {
-      setCurrentDataset(selected);
-      await generateMetrics(selected);
-    }
-  };
+  }, [session?.user?.id]);
 
   const saveMetricsToMongoDB = async (datasetId: string, metrics: Record<string, number | string | null>) => {
     if (!session?.user?.id) return;
     
     try {
       setIsSaving(true);
+      setError('');
       
-      // metrics is already an object (Record<string, number|string|null>)
-      const metricsRecord = { ...metrics };
-      
+      // Check if metrics already exist for this dataset and user
       const response = await fetch('/api/metrics/save', {
         method: 'POST',
         headers: {
@@ -246,7 +268,7 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
         body: JSON.stringify({
           userId: session.user.id,
           datasetId,
-          metrics: metricsRecord,
+          metrics: metrics,
           timestamp: new Date().toISOString()
         }),
       });
@@ -255,13 +277,17 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
         setMetricsSaved(true);
         toast.success('Metrics saved successfully');
       } else {
-        throw new Error('Failed to save metrics');
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to save metrics');
       }
     } catch (error) {
       console.error('Error saving metrics:', error);
+      setMetricsSaved(false);
       if (error instanceof Error) {
+        setError(error.message);
         toast.error(`Failed to save metrics: ${error.message}`);
       } else {
+        setError('Failed to save metrics');
         toast.error('Failed to save metrics');
       }
     } finally {
@@ -269,131 +295,16 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
     }
   };
 
-
-  const filterMetricsByCategory = (category: string) => {
-  // Convert metrics object to array of {name, value}
-  const metricsArray = Object.entries(metrics).map(([name, value]) => ({ name, value }));
-
-  if (category === 'all') {
-    return metricsArray;
-  }
-
-  return metricsArray.filter(metric => {
-    switch (category) {
-      case 'data_structure':
-        return metric.name.includes('Column') || 
-               metric.name.includes('Row') || 
-               metric.name.includes('Size');
-      case 'data_quality':
-        return metric.name.includes('Quality') || 
-               metric.name.includes('Missing') || 
-               metric.name.includes('Duplicate') || 
-               metric.name.includes('Outlier');
-      case 'statistical':
-        return metric.name.includes('Mean') || 
-               metric.name.includes('Distribution') || 
-               metric.name.includes('Correlation');
-      case 'advanced':
-        return metric.name.includes('Feature') || 
-               metric.name.includes('Label') || 
-               metric.name.includes('Class');
-      default:
-        return true;
-    }
-  });
-};
-
-  const prepareMetricsForAnalysis = (metrics: any[]) => {
-    const metricsData: Record<string, number> = {
-      Row_Count: 0,
-      Column_Count: 0,
-      File_Size_MB: 0,
-      Numeric_Columns_Count: 0,
-      Categorical_Columns_Count: 0,
-      Date_Columns_Count: 0,
-      Missing_Values_Pct: 0,
-      Duplicate_Records_Count: 0,
-      Outlier_Rate: 0,
-      Inconsistency_Rate: 0,
-      Data_Type_Mismatch_Rate: 0,
-      Null_vs_NaN_Distribution: 0,
-      Cardinality_Categorical: 0,
-      Target_Imbalance: 0,
-      Feature_Importance_Consistency: 0,
-      Class_Overlap_Score: 0,
-      Label_Noise_Rate: 0,
-      Feature_Correlation_Mean: 0,
-      Range_Violation_Rate: 0,
-      Mean_Median_Drift: 0,
-      Data_Freshness: 0,
-      Anomaly_Count: 0,
-      Encoding_Coverage_Rate: 0,
-      Variance_Threshold_Check: 0,
-      Data_Density_Completeness: 0,
-      Domain_Constraint_Violations: 0
-    };
-
-    // Map our metrics to the expected format
-    Object.entries(metrics).forEach(([name, value]) => {
-      const numericValue = typeof value === 'string' ? parseFloat(value) : value;
-      if (isNaN(numericValue)) return;
-
-      switch(name) {
-        case 'rowCount':
-          metricsData.Row_Count = numericValue;
-          break;
-        case 'columnCount':
-          metricsData.Column_Count = value;
-          break;
-        case 'fileSize':
-          metricsData.File_Size_MB = value;
-          break;
-        case 'numericColumnsCount':
-          metricsData.Numeric_Columns_Count = value;
-          break;
-        case 'categoricalColumnsCount':
-          metricsData.Categorical_Columns_Count = value;
-          break;
-        case 'dateColumnsCount':
-          metricsData.Date_Columns_Count = value;
-          break;
-        case 'missingValuesPct':
-          metricsData.Missing_Values_Pct = value;
-          break;
-        // Add more mappings based on your actual metric names
-      }
-    });
-
-    return metricsData;
-  };
-
-  const performMLAnalysis = async () => {
-    if (!currentDataset || !metrics.length) return;
-
-    try {
-      setIsAnalyzing(true);
-      const metricsData = prepareMetricsForAnalysis(metrics);
-      
-      const response = await fetch('https://data-viz-ai-model.onrender.com/predict', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(metricsData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to perform ML analysis');
-      }
-
-      const results = await response.json();
-      setMlAnalysisResults(results);
-      toast.success('ML Analysis completed successfully');
-    } catch (error) {
-      console.error('Error performing ML analysis:', error);
-      toast.error('Failed to perform ML analysis. Please try again.');
-    } finally {
-      setIsAnalyzing(false);
+  const handleDatasetChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    const selected = datasets.find(d => d._id === selectedId);
+    if (selected) {
+      setCurrentDataset(selected);
+      setMetricsSaved(false); // Reset saved state when dataset changes
+      await generateMetrics(selected);
+    } else {
+      setCurrentDataset(null);
+      setMetrics({});
     }
   };
 
@@ -506,10 +417,10 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
                     </div>
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                       <button
-                        onClick={performMLAnalysis}
-                        disabled={isAnalyzing}
+                        // onClick={performMLAnalysis}
+                        disabled={false}
                         className={`flex items-center justify-between w-full p-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg
-                          ${isAnalyzing 
+                          ${false 
                             ? 'bg-gray-100 cursor-not-allowed' 
                             : 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700'
                           }`}
@@ -517,20 +428,21 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
                         <div className="text-left">
                           <p className="text-sm font-medium text-white/90 mb-1">Deep Learning Analysis</p>
                           <p className="text-lg font-bold text-white">
-                            {isAnalyzing ? 'Analyzing...' : 'Start Analysis'}
+                            {/* {isAnalyzing ? 'Analyzing...' : 'Start Analysis'} */}
+                            Start Analysis
                           </p>
                         </div>
                         <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                          {isAnalyzing ? (
+                          {/* {isAnalyzing ? (
                             <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                          ) : (
+                          ) : ( */}
                             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                             </svg>
-                          )}
+                          {/* )} */}
                         </div>
                       </button>
                     </div>
@@ -579,7 +491,7 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-100">
-                          {filterMetricsByCategory(activeTab).map((metric, index) => (
+                          {filterMetricsByCategory(metrics, activeTab).map((metric, index) => (
                             <tr 
                               key={index} 
                               className={`hover:bg-gray-50 transition-colors duration-150 ${
@@ -593,9 +505,7 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className="text-sm font-medium text-gray-900">
-                                  {typeof metric.value === 'number' 
-                                    ? metric.value.toFixed(1) 
-                                    : metric.value}
+                                  {formatMetricValue(metric.value)}
                                 </span>
                               </td>
                             </tr>
@@ -636,34 +546,9 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
                       ) : (
                         <>
                           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3 3m3-3V4" />
                           </svg>
                           Save Metrics
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      className={`inline-flex items-center px-6 py-3 rounded-lg font-semibold transition-all duration-200 
-                        bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg
-                        ${isAnalyzing ? 'opacity-75 cursor-not-allowed' : ''}`}
-                      onClick={performMLAnalysis}
-                      disabled={isAnalyzing || !metrics.length}
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h3m-1 4l-3-3m0 0l-3 3m3-3V4" />
-                          </svg>
-                          Perform ML Analysis
                         </>
                       )}
                     </button>
@@ -671,12 +556,12 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
                 )}
 
                 {/* ML Analysis Results - Detailed Display */}
-                {mlAnalysisResults && (
+                {/* {mlAnalysisResults && (
                   <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 className="text-2xl font-bold text-gray-900 mb-6">ML Analysis Results</h3>
                     
                     {/* Overall Score with Progress Bar */}
-                    <div className="mb-8">
+                    {/* <div className="mb-8">
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="text-lg font-semibold text-gray-900">Overall Quality Score</h4>
                         <div className="text-2xl font-bold text-blue-600">
@@ -697,10 +582,10 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
                           <span>Excellent</span>
                         </div>
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Metrics Score Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {Object.entries(mlAnalysisResults.metric_scores).map(([metric, score]) => (
                         <div key={metric} className="bg-gray-50 rounded-lg p-4">
                           <div className="flex justify-between items-center">
@@ -727,7 +612,7 @@ const [metrics, setMetrics] = useState<Record<string, number|string|null>>({});
                       ))}
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
             )}
           </div>
