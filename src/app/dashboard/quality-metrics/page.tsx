@@ -154,7 +154,7 @@ export default function QualityMetrics() {
       const csvData = convertToCSV(dataset);
       
       // Send dataset to Flask backend
-      const response = await fetch('http://127.0.0.1:1289/analyze', {
+      const response = await fetch('https://metric-models-dataviz.onrender.com/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
