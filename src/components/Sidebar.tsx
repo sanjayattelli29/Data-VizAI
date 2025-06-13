@@ -4,32 +4,45 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  ChartBarIcon, 
-  TableCellsIcon, 
-  ArrowUpTrayIcon, 
-  ChartPieIcon, 
-  HomeIcon,
   Bars3Icon,
   XMarkIcon,
-  ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline';
 
+import {
+  LayoutDashboard,
+  Table,
+  Upload,
+  ClipboardCheck,
+  BarChart2,
+  LineChart,
+  PieChart,
+  AreaChart,
+  ScatterChart,
+  Box,
+  CircleDot,
+  Radar,
+  BarChartBig // alternate for Histogram
+} from 'lucide-react';
+
+
+
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Data Table', href: '/dashboard/data-table', icon: TableCellsIcon },
-  { name: 'Upload Dataset', href: '/dashboard/upload', icon: ArrowUpTrayIcon },
-  { name: 'Quality Metrics', href: '/dashboard/quality-metrics', icon: ClipboardDocumentCheckIcon },
-  { name: 'Bar Charts', href: '/dashboard/bar-charts', icon: ChartBarIcon },
-  { name: 'Line Charts', href: '/dashboard/line-charts', icon: ChartBarIcon },
-  { name: 'Pie Charts', href: '/dashboard/pie-charts', icon: ChartPieIcon },
-  { name: 'Area Charts', href: '/dashboard/area-charts', icon: ChartBarIcon },
-  { name: 'Histogram', href: '/dashboard/histogram', icon: ChartBarIcon },
-  { name: 'Scatter Plot', href: '/dashboard/scatter-plot', icon: ChartBarIcon },
-  { name: 'Box Plot', href: '/dashboard/box-plot', icon: ChartBarIcon },
-  { name: 'Bubble Chart', href: '/dashboard/bubble-chart', icon: ChartBarIcon },
-  { name: 'Radar Chart', href: '/dashboard/radar-chart', icon: ChartBarIcon },
-  { name: 'Waterfall Chart', href: '/dashboard/waterfall-chart', icon: ChartBarIcon },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Data Table', href: '/dashboard/data-table', icon: Table },
+  { name: 'Upload Dataset', href: '/dashboard/upload', icon: Upload },
+  { name: 'Quality Metrics', href: '/dashboard/quality-metrics', icon: ClipboardCheck },
+  { name: 'Bar Charts', href: '/dashboard/bar-charts', icon: BarChart2 },
+  { name: 'Line Charts', href: '/dashboard/line-charts', icon: LineChart },
+  { name: 'Pie Charts', href: '/dashboard/pie-charts', icon: PieChart },
+  { name: 'Area Charts', href: '/dashboard/area-charts', icon: AreaChart },
+  { name: 'Histogram', href: '/dashboard/histogram', icon: BarChartBig }, // closest match
+  { name: 'Scatter Plot', href: '/dashboard/scatter-plot', icon: ScatterChart },
+  { name: 'Box Plot', href: '/dashboard/box-plot', icon: Box },
+  { name: 'Bubble Chart', href: '/dashboard/bubble-chart', icon: CircleDot },
+  { name: 'Radar Chart', href: '/dashboard/radar-chart', icon: Radar },
 ];
+
+
 
 export default function Sidebar() {
   const pathname = usePathname();

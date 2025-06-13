@@ -13,7 +13,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ChartBarIcon, CpuChipIcon } from '@heroicons/react/24/outline';
 
 // Register ChartJS components
 ChartJS.register(
@@ -160,13 +160,13 @@ export default function WaterfallChart() {
     
     // Generate colors based on positive/negative values or total
     const backgroundColor = waterfallData.map((item: unknown) => {
-      if (item.isTotal) return 'rgba(75, 192, 192, 0.6)'; // Total
-      return item.value >= 0 ? 'rgba(54, 162, 235, 0.6)' : 'rgba(255, 99, 132, 0.6)'; // Positive or negative
+      if (item.isTotal) return 'rgba(16, 185, 129, 0.8)'; // Emerald for total
+      return item.value >= 0 ? 'rgba(59, 130, 246, 0.8)' : 'rgba(239, 68, 68, 0.8)'; // Blue for positive, Red for negative
     });
     
     const borderColor = waterfallData.map((item: unknown) => {
-      if (item.isTotal) return 'rgba(75, 192, 192, 1)'; // Total
-      return item.value >= 0 ? 'rgba(54, 162, 235, 1)' : 'rgba(255, 99, 132, 1)'; // Positive or negative
+      if (item.isTotal) return 'rgba(16, 185, 129, 1)'; // Emerald for total
+      return item.value >= 0 ? 'rgba(59, 130, 246, 1)' : 'rgba(239, 68, 68, 1)'; // Blue for positive, Red for negative
     });
 
     setChartData({
@@ -177,7 +177,8 @@ export default function WaterfallChart() {
           data: waterfallData.map((item: unknown) => item.isTotal ? item.value : item.value),
           backgroundColor,
           borderColor,
-          borderWidth: 1,
+          borderWidth: 2,
+          borderRadius: 4,
           // Custom properties for the waterfall plugin
           start: waterfallData.map((item: unknown) => item.start),
           isTotal: waterfallData.map((item: unknown) => item.isTotal),
@@ -190,182 +191,312 @@ export default function WaterfallChart() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-center items-center h-96">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600"></div>
+              <div className="text-gray-600 font-medium">Loading Smart Analysis...</div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (datasets.length === 0) {
     return (
-      <div>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Waterfall Chart</h1>
-          <p className="mt-2 text-gray-600">Visualize cumulative effect of sequential positive and negative values.</p>
-        </div>
-        
-        <div className="bg-white shadow rounded-lg p-6 text-center">
-          <p className="text-gray-500 mb-4">No datasets found. Upload your first dataset to get started!</p>
-          <Link 
-            href="/dashboard/upload"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Upload Dataset
-          </Link>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="mb-12 text-center">
+            <div className="flex justify-center items-center mb-6">
+              <CpuChipIcon className="h-12 w-12 text-blue-600 mr-3" />
+              <div>
+                <h1 className="text-4xl font-bold text-gray-900">Smart Data Analyser</h1>
+                <p className="text-lg text-gray-600 mt-2">Powered by <span className="font-semibold text-blue-600">AI Agents & Deep Learning</span></p>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100">
+              <ChartBarIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Waterfall Chart Analysis</h2>
+              <p className="text-gray-600 mb-6">Visualize cumulative effects and sequential data transformations with advanced AI-powered insights</p>
+            </div>
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center">
+            <div className="max-w-md mx-auto">
+              <div className="bg-blue-50 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <ChartBarIcon className="h-10 w-10 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">No Datasets Found</h3>
+              <p className="text-gray-600 mb-8">Upload your first dataset to unlock powerful AI-driven analytics and multi-dimensional data exploration</p>
+              <Link 
+                href="/dashboard/upload"
+                className="inline-flex items-center px-6 py-3 border-2 border-blue-600 text-base font-semibold rounded-xl text-blue-600 bg-white hover:bg-blue-600 hover:text-white transition-all duration-200 transform hover:scale-105"
+              >
+                <CpuChipIcon className="h-5 w-5 mr-2" />
+                Upload Dataset
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <div className="flex items-center">
-          <Link 
-            href={`/dashboard/data-table?id=${currentDataset?._id}`}
-            className="mr-4 p-1 rounded-full text-gray-400 hover:text-gray-500"
-          >
-            <ArrowLeftIcon className="h-6 w-6" aria-hidden="true" />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Waterfall Chart</h1>
-            <p className="mt-2 text-gray-600">Visualize cumulative effect of sequential positive and negative values.</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="p-4 sm:p-6 border-b border-gray-200">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            <div>
-              <label htmlFor="dataset-select" className="block text-sm font-medium text-gray-700">
-                Select Dataset
-              </label>
-              <select
-                id="dataset-select"
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                value={currentDataset?._id || ''}
-                onChange={handleDatasetChange}
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <Link 
+                href={`/dashboard/data-table?id=${currentDataset?._id}`}
+                className="mr-6 p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200"
               >
-                {datasets.map((dataset) => (
-                  <option key={dataset._id} value={dataset._id}>
-                    {dataset.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="category-select" className="block text-sm font-medium text-gray-700">
-                Category Column
-              </label>
-              <select
-                id="category-select"
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <option value="">Select Category</option>
-                {currentDataset?.columns?.filter((column: unknown) => column.type === 'text').map((column: unknown) => (
-                  <option key={column.name} value={column.name}>
-                    {column.name} (text)
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="value-select" className="block text-sm font-medium text-gray-700">
-                Value Column (Numeric)
-              </label>
-              <select
-                id="value-select"
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                value={selectedValue}
-                onChange={(e) => setSelectedValue(e.target.value)}
-              >
-                <option value="">Select Value</option>
-                {currentDataset?.columns?.filter((column: unknown) => column.type === 'numeric').map((column: unknown) => (
-                  <option key={column.name} value={column.name}>
-                    {column.name} (numeric)
-                  </option>
-                ))}
-              </select>
+                <ArrowLeftIcon className="h-6 w-6" />
+              </Link>
+              <div className="flex items-center">
+                <CpuChipIcon className="h-10 w-10 text-blue-600 mr-4" />
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">Smart Data Analyser</h1>
+                  <p className="text-gray-600 mt-1">Powered by <span className="font-semibold text-blue-600">AI Agents & Deep Learning</span></p>
+                </div>
+              </div>
             </div>
           </div>
           
-          {error && (
-            <div className="mt-4 text-sm text-red-600">
-              {error}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+            <div className="flex items-center">
+              <ChartBarIcon className="h-8 w-8 text-blue-600 mr-3" />
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Waterfall Chart Analysis</h2>
+                <p className="text-gray-600 mt-1">Multi-dimensional analysis of cumulative effects and sequential transformations</p>
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
-        <div className="p-6">
-          {chartData ? (
-            <div className="h-96">
-              <Bar 
-                data={chartData} 
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      display: false,
-                    },
-                    title: {
-                      display: true,
-                      text: `Waterfall Chart of ${selectedValue} by ${selectedCategory}`,
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: (context) => {
-                          const index = context.dataIndex;
-                          const dataset = context.dataset;
-                          const isTotal = (dataset as any).isTotal[index];
-                          const value = context.parsed.y;
-                          
-                          if (isTotal) {
-                            return `Total: ${value}`;
-                          } else {
-                            const start = (dataset as any).start[index];
-                            return [
-                              `Value: ${value}`,
-                              `Start: ${start}`,
-                              `End: ${start + value}`
-                            ];
+        {/* Main Content */}
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+          {/* Controls Section */}
+          <div className="bg-gray-50 border-b border-gray-200 p-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="space-y-2">
+                <label htmlFor="dataset-select" className="block text-sm font-semibold text-gray-800">
+                  Select Dataset
+                </label>
+                <select
+                  id="dataset-select"
+                  className="w-full px-4 py-3 text-gray-900 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  value={currentDataset?._id || ''}
+                  onChange={handleDatasetChange}
+                >
+                  {datasets.map((dataset) => (
+                    <option key={dataset._id} value={dataset._id}>
+                      {dataset.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="category-select" className="block text-sm font-semibold text-gray-800">
+                  Category Column
+                </label>
+                <select
+                  id="category-select"
+                  className="w-full px-4 py-3 text-gray-900 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                  <option value="">Select Category</option>
+                  {currentDataset?.columns?.filter((column: unknown) => column.type === 'text').map((column: unknown) => (
+                    <option key={column.name} value={column.name}>
+                      {column.name} (text)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="value-select" className="block text-sm font-semibold text-gray-800">
+                  Value Column (Numeric)
+                </label>
+                <select
+                  id="value-select"
+                  className="w-full px-4 py-3 text-gray-900 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  value={selectedValue}
+                  onChange={(e) => setSelectedValue(e.target.value)}
+                >
+                  <option value="">Select Value</option>
+                  {currentDataset?.columns?.filter((column: unknown) => column.type === 'numeric').map((column: unknown) => (
+                    <option key={column.name} value={column.name}>
+                      {column.name} (numeric)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            {error && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Chart Section */}
+          <div className="p-8">
+            {chartData ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      AI-Powered Waterfall Analysis
+                    </h3>
+                    <p className="text-gray-600 mt-1">
+                      Deep learning insights: {selectedValue} distribution across {selectedCategory}
+                    </p>
+                  </div>
+                  <div className="bg-blue-50 px-4 py-2 rounded-xl">
+                    <span className="text-sm font-medium text-blue-800">
+                      {chartData.labels.length - 1} Data Points + Total
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                  <div className="h-96">
+                    <Bar 
+                      data={chartData} 
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            display: false,
+                          },
+                          title: {
+                            display: false,
+                          },
+                          tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                              label: (context) => {
+                                const index = context.dataIndex;
+                                const dataset = context.dataset;
+                                const isTotal = (dataset as any).isTotal[index];
+                                const value = context.parsed.y;
+                                
+                                if (isTotal) {
+                                  return `Total: ${value.toLocaleString()}`;
+                                } else {
+                                  const start = (dataset as any).start[index];
+                                  return [
+                                    `Value: ${value.toLocaleString()}`,
+                                    `Start: ${start.toLocaleString()}`,
+                                    `End: ${(start + value).toLocaleString()}`
+                                  ];
+                                }
+                              }
+                            }
+                          }
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            title: {
+                              display: true,
+                              text: selectedValue,
+                              font: {
+                                size: 14,
+                                weight: 'bold'
+                              },
+                              color: '#374151'
+                            },
+                            ticks: {
+                              color: '#6B7280',
+                              font: {
+                                size: 12
+                              }
+                            },
+                            grid: {
+                              color: '#E5E7EB'
+                            }
+                          },
+                          x: {
+                            title: {
+                              display: true,
+                              text: selectedCategory,
+                              font: {
+                                size: 14,
+                                weight: 'bold'
+                              },
+                              color: '#374151'
+                            },
+                            ticks: {
+                              color: '#6B7280',
+                              font: {
+                                size: 12
+                              }
+                            },
+                            grid: {
+                              display: false
+                            }
                           }
                         }
-                      }
-                    }
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      title: {
-                        display: true,
-                        text: selectedValue,
-                      }
-                    },
-                    x: {
-                      title: {
-                        display: true,
-                        text: selectedCategory,
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-500">
-                {!selectedCategory || !selectedValue
-                  ? 'Select Category and Value columns to generate a waterfall chart'
-                  : 'No data available for the selected columns'}
-              </p>
-            </div>
-          )}
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                {/* AI Insights Panel */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+                  <div className="flex items-start">
+                    <CpuChipIcon className="h-6 w-6 text-blue-600 mr-3 mt-1" />
+                    <div>
+                      <h4 className="text-base font-semibold text-gray-900 mb-2">AI Analysis Summary</h4>
+                      <p className="text-gray-700 text-sm leading-relaxed">
+                        The waterfall analysis reveals sequential data transformations across {chartData.labels.length - 1} categories. 
+                        AI-powered pattern recognition identifies positive contributions (blue bars), negative impacts (red bars), 
+                        and cumulative effects leading to the final total (green bar). This multi-dimensional view enables 
+                        deep insights into data flow and contribution analysis.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="bg-gray-50 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                  <ChartBarIcon className="h-12 w-12 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Ready for Analysis</h3>
+                <p className="text-gray-600 max-w-md mx-auto">
+                  {!selectedCategory || !selectedValue
+                    ? 'Select both Category and Value columns to generate your AI-powered waterfall analysis'
+                    : 'No valid data available for the selected columns. Please choose different columns or check your dataset.'}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
