@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
+
+import N8nInsights from './n8n';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -1241,22 +1243,13 @@ export default function QualityMetrics() {
                         50% { transform: translateY(-10px) rotate(180deg); }
                       }
                     `}</style>
+  <N8nInsights
+  metrics={analysisResult?.metric_scores || {}}
+  overallScore={analysisResult?.overall_score || 0}
+  topIssues={analysisResult?.top_issues || {}}
+/>
+
                   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
