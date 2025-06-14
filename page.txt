@@ -417,6 +417,23 @@ export default function QualityMetrics() {
     }
   };
 
+  const getQualityRange = (score: string): string => {
+    switch (score.toLowerCase()) {
+      case 'poor':
+        return '0-30%';
+      case 'fair':
+        return '31-50%';
+      case 'good':
+        return '51-75%';
+      case 'great':
+        return '76-90%';
+      case 'excellent':
+        return '91-100%';
+      default:
+        return 'N/A';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -583,53 +600,51 @@ export default function QualityMetrics() {
                     </div>
                   </div>
                   
-                  {/* Simple Metrics Table */}
-                  <div className="overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
-                              Metric Name
-                            </th>
-                            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
-                              Score
-                            </th>
-                            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
-                              Rating
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-100">
-                          {filterMetricsByCategory(metrics, activeTab).map((metric, index) => (
-                            <tr 
-                              key={index} 
-                              className={`hover:bg-gray-50 transition-colors duration-150 ${
-                                index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
-                              }`}
-                            >
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="text-sm font-semibold text-gray-900">
-                                  {metric.name.replace(/_/g, ' ')}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="text-sm font-medium text-gray-900">
-                                  {formatMetricValue(metric.value)}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getScoreColor(getMetricScore(metric.name, metric.value))}`}>
-                                  {getMetricScore(metric.name, metric.value)}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+
+
+
+                {/* Simple Metrics Grid View */}
+                <div className="w-full px-4 py-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {filterMetricsByCategory(metrics, activeTab).map((metric, index) => (
+                      <div
+                        key={index}
+                        className="flex flex-col items-start justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition duration-150"
+                      >
+                        <span className="text-sm font-semibold text-gray-800 mb-2">
+                          {metric.name.replace(/_/g, ' ')}
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getScoreColor(
+                            getMetricScore(metric.name, metric.value)
+                          )}`}
+                        >
+                          {getQualityRange(getMetricScore(metric.name, metric.value))}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

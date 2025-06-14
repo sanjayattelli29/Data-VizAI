@@ -86,7 +86,6 @@ export default function QualityMetrics() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<ChartJS | null>(null);
 
-
   // Force re-render to ensure chart updates
   const [forceUpdate, setForceUpdate] = useState(0);
 
