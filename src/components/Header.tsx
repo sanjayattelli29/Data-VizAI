@@ -65,15 +65,15 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-100">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
+    <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-40">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8" aria-label="Global">
         {/* Logo */}
         <div className="flex lg:flex-1">
-          <Link href="/" className="-m-1.5 p-1.5 flex items-center space-x-2 group">
-            <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:shadow-lg transition-all duration-200">
+          <Link href="/" className="-m-1.5 p-1.5 flex items-center space-x-3 group">
+            <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300 ease-out">
               <ChartBarIcon className="w-5 h-5 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent">
               DataViz
             </span>
           </Link>
@@ -83,7 +83,7 @@ export default function Header() {
         <div className="flex lg:hidden">
           <button
             type="button"
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+            className="-m-2.5 inline-flex items-center justify-center rounded-xl p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all duration-200"
             onClick={() => setMobileMenuOpen(true)}
           >
             <span className="sr-only">Open main menu</span>
@@ -92,15 +92,18 @@ export default function Header() {
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex lg:gap-x-8">
-          <Link href="/features" className="text-sm font-semibold leading-6 text-gray-700 hover:text-indigo-600 transition-colors duration-200">
-            Features
+        <div className="hidden lg:flex lg:gap-x-1">
+          <Link href="/features" className="relative px-4 py-2 text-sm font-medium text-slate-700 hover:text-indigo-700 transition-all duration-200 rounded-lg hover:bg-slate-50/80 group">
+            <span className="relative z-10"></span>
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
           </Link>
-          <Link href="/pricing" className="text-sm font-semibold leading-6 text-gray-700 hover:text-indigo-600 transition-colors duration-200">
-            Pricing
+          <Link href="/pricing" className="relative px-4 py-2 text-sm font-medium text-slate-700 hover:text-indigo-700 transition-all duration-200 rounded-lg hover:bg-slate-50/80 group">
+            <span className="relative z-10"></span>
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
           </Link>
-          <Link href="/about" className="text-sm font-semibold leading-6 text-gray-700 hover:text-indigo-600 transition-colors duration-200">
-            About
+          <Link href="/about" className="relative px-4 py-2 text-sm font-medium text-slate-700 hover:text-indigo-700 transition-all duration-200 rounded-lg hover:bg-slate-50/80 group">
+            <span className="relative z-10"></span>
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
           </Link>
         </div>
 
@@ -111,16 +114,17 @@ export default function Header() {
               {/* Dashboard Link */}
               <Link 
                 href="/dashboard" 
-                className="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-700 transition-colors duration-200"
+                className="relative px-4 py-2 text-sm font-semibold text-indigo-700 hover:text-indigo-800 transition-all duration-200 rounded-lg hover:bg-indigo-50/80 group"
               >
-                Dashboard
+                <span className="relative z-10">Dashboard</span>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-50 to-indigo-100 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </Link>
 
               {/* User Avatar Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 border border-gray-200 hover:border-gray-300"
+                  className="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-50/80 transition-all duration-200 border border-slate-200/60 hover:border-slate-300/80 hover:shadow-sm"
                   onClick={toggleDropdown}
                   aria-expanded={dropdownOpen}
                   aria-haspopup="true"
@@ -128,7 +132,7 @@ export default function Header() {
                   {/* Profile Image */}
                   <div className="relative">
                     {profileImage ? (
-                      <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-indigo-100">
+                      <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-indigo-100/80">
                         <Image
                           src={profileImage}
                           alt={userName}
@@ -138,76 +142,78 @@ export default function Header() {
                         />
                       </div>
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 flex items-center justify-center">
                         <UserCircleIcon className="w-5 h-5 text-white" />
                       </div>
                     )}
                     {/* Online indicator */}
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full shadow-sm"></div>
                   </div>
 
                   {/* User Info */}
-                  <div className="text-left">
-                    <div className="text-sm font-medium text-gray-900">{userName}</div>
-                    <div className="text-xs text-gray-500">Online</div>
+                  <div className="text-left hidden sm:block">
+                    <div className="text-sm font-medium text-slate-900">{userName}</div>
+                    <div className="text-xs text-slate-500 font-medium">Online</div>
                   </div>
 
                   {/* Dropdown Arrow */}
-                  <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDownIcon className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Dropdown Menu */}
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg ring-1 ring-black ring-opacity-5 border border-gray-100 z-50">
+                  <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl border border-slate-200/60 backdrop-blur-xl z-50 overflow-hidden">
+                    <div className="absolute inset-0 bg-white/95 backdrop-blur-xl"></div>
+                    
                     {/* User Info Header */}
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <div className="flex items-center space-x-3">
+                    <div className="relative px-5 py-4 border-b border-slate-100/80">
+                      <div className="flex items-center space-x-4">
                         {profileImage ? (
-                          <div className="w-10 h-10 rounded-full overflow-hidden">
+                          <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-slate-100">
                             <Image
                               src={profileImage}
                               alt={userName}
-                              width={40}
-                              height={40}
+                              width={48}
+                              height={48}
                               className="w-full h-full object-cover"
                             />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-                            <UserCircleIcon className="w-6 h-6 text-white" />
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 flex items-center justify-center">
+                            <UserCircleIcon className="w-7 h-7 text-white" />
                           </div>
                         )}
-                        <div>
-                          <div className="font-medium text-gray-900">{userName}</div>
-                          <div className="text-sm text-gray-500">{session?.user?.email}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-slate-900 truncate">{userName}</div>
+                          <div className="text-sm text-slate-500 truncate">{session?.user?.email}</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Menu Items */}
-                    <div className="py-2">
+                    <div className="relative py-2">
                       <Link
                         href="/profile"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                        className="flex items-center px-5 py-3 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        <UserCircleIcon className="w-4 h-4 mr-3 text-gray-400" />
+                        <UserCircleIcon className="w-4 h-4 mr-3 text-slate-400" />
                         Your Profile
                       </Link>
                       <Link
                         href="/settings"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                        className="flex items-center px-5 py-3 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        <Cog6ToothIcon className="w-4 h-4 mr-3 text-gray-400" />
+                        <Cog6ToothIcon className="w-4 h-4 mr-3 text-slate-400" />
                         Settings
                       </Link>
                     </div>
 
                     {/* Sign Out */}
-                    <div className="py-2 border-t border-gray-100">
+                    <div className="relative py-2 border-t border-slate-100/80">
                       <button
-                        className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                        className="flex w-full items-center px-5 py-3 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50/80 transition-all duration-200"
                         onClick={async () => {
                           await signOut({ redirect: false });
                           window.location.href = '/auth/signin';
@@ -223,15 +229,16 @@ export default function Header() {
               </div>
             </>
           ) : (
-            <div className="flex items-center gap-4">
-              <Link href="/auth/signin" className="text-sm font-semibold leading-6 text-gray-900 hover:text-indigo-600 transition-colors duration-200">
+            <div className="flex items-center gap-3">
+              <Link href="/auth/signin" className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors duration-200 rounded-lg hover:bg-slate-50/80">
                 Sign in
               </Link>
               <Link
                 href="/auth/signup"
-                className="rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transition-all duration-200"
+                className="relative overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:from-indigo-700 hover:via-indigo-800 hover:to-purple-800 hover:shadow-lg hover:shadow-indigo-500/25 hover:-translate-y-0.5"
               >
-                Get started
+                <span className="relative z-10">Get started</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200"></div>
               </Link>
             </div>
           )}
@@ -241,46 +248,46 @@ export default function Header() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden" role="dialog" aria-modal="true">
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-25"></div>
-          <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
+          <div className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-sm"></div>
+          <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white/95 backdrop-blur-xl px-6 py-6 sm:max-w-sm border-l border-slate-200/60">
             <div className="flex items-center justify-between">
-              <Link href="/" className="-m-1.5 p-1.5 flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <Link href="/" className="-m-1.5 p-1.5 flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 rounded-xl flex items-center justify-center">
                   <ChartBarIcon className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent">
                   DataViz
                 </span>
               </Link>
               <button
                 type="button"
-                className="-m-2.5 rounded-md p-2.5 text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                className="-m-2.5 rounded-xl p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all duration-200"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <span className="sr-only">Close menu</span>
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
-            <div className="mt-6 flow-root">
-              <div className="-my-6 divide-y divide-gray-500/10">
-                <div className="space-y-2 py-6">
+            <div className="mt-8 flow-root">
+              <div className="-my-6 divide-y divide-slate-200/60">
+                <div className="space-y-1 py-6">
                   <Link
                     href="/features"
-                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                    className="-mx-3 block rounded-xl px-4 py-3 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Features
                   </Link>
                   <Link
                     href="/pricing"
-                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                    className="-mx-3 block rounded-xl px-4 py-3 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Pricing
                   </Link>
                   <Link
                     href="/about"
-                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                    className="-mx-3 block rounded-xl px-4 py-3 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     About
@@ -290,40 +297,40 @@ export default function Header() {
                   {session ? (
                     <>
                       {/* Mobile Profile Section */}
-                      <div className="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
+                      <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-2xl border border-indigo-100/50">
+                        <div className="flex items-center space-x-4">
                           {profileImage ? (
-                            <div className="w-12 h-12 rounded-full overflow-hidden">
+                            <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-white/60">
                               <Image
                                 src={profileImage}
                                 alt={userName}
-                                width={48}
-                                height={48}
+                                width={56}
+                                height={56}
                                 className="w-full h-full object-cover"
                               />
                             </div>
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 flex items-center justify-center">
                               <UserCircleIcon className="w-8 h-8 text-white" />
                             </div>
                           )}
-                          <div>
-                            <div className="font-semibold text-gray-900">{userName}</div>
-                            <div className="text-sm text-gray-600">{session?.user?.email}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-slate-900 truncate">{userName}</div>
+                            <div className="text-sm text-slate-600 truncate">{session?.user?.email}</div>
                           </div>
                         </div>
                       </div>
 
                       <Link
                         href="/dashboard"
-                        className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                        className="-mx-3 block rounded-xl px-4 py-3 text-base font-semibold text-indigo-700 hover:text-indigo-800 hover:bg-indigo-50/80 transition-all duration-200"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Dashboard
                       </Link>
                       <Link
                         href="/profile"
-                        className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                        className="-mx-3 block rounded-xl px-4 py-3 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Profile
@@ -334,7 +341,7 @@ export default function Header() {
                           window.location.href = '/auth/signin';
                           setMobileMenuOpen(false);
                         }}
-                        className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-red-600 hover:bg-red-50 w-full text-left"
+                        className="-mx-3 block rounded-xl px-4 py-3 text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50/80 w-full text-left transition-all duration-200"
                       >
                         Sign out
                       </button>
@@ -343,14 +350,14 @@ export default function Header() {
                     <>
                       <Link
                         href="/auth/signin"
-                        className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                        className="-mx-3 block rounded-xl px-4 py-3 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Sign in
                       </Link>
                       <Link
                         href="/auth/signup"
-                        className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-indigo-600 hover:bg-gray-50"
+                        className="-mx-3 block rounded-xl px-4 py-3 text-base font-semibold text-indigo-700 hover:text-indigo-800 hover:bg-indigo-50/80 transition-all duration-200"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Get started

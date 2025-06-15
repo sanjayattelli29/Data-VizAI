@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import ChatbotWidget from '@/components/ChatbotWidget';
 
 export default function DashboardLayout({
   children,
@@ -47,6 +48,7 @@ export default function DashboardLayout({
           </main>
         </div>
       </div>
+      <ChatbotWidget />
     </div>
   );
 }
