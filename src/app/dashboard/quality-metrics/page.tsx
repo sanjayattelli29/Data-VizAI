@@ -7,6 +7,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
+import Chatbot from './chatbot';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -262,9 +263,35 @@ export default function QualityMetrics() {
       setError('');
 
       try {
-        toast.loading('Calculating metrics...', { duration: 3000 });
+        // Check MongoDB cache first
+        console.log('Checking MongoDB cache for:', {
+          userId: session?.user?.id,
+          datasetId: selected._id
+        });
+
+        const mongoResponse = await fetch(`/api/metrics/get?userId=${session?.user?.id}&datasetId=${selected._id}`);
+        const data = await mongoResponse.json();
         
-        // Call Flask backend to generate metrics
+        console.log('MongoDB cache response:', {
+          status: mongoResponse.status,
+          data: data
+        });
+        
+        // Check if we have valid cached metrics
+        if (mongoResponse.ok && data.success && data.metrics) {
+          console.log('Found valid cached metrics');
+          setMetrics(data.metrics);
+          setMetricsSaved(true);
+          toast.success('Loaded metrics from cache');
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('No valid cache found, calling Flask API');
+        
+        // If no cached data, proceed with Flask backend
+        toast.loading('Calculating new metrics...', { duration: 3000 });
+        
         const csvData = convertToCSV(selected);
         const flaskResponse = await fetch('https://metric-models-dataviz.onrender.com/analyze', {
           method: 'POST',
@@ -289,9 +316,10 @@ export default function QualityMetrics() {
           throw new Error(result.error || 'Failed to analyze dataset');
         }
 
-        // Display the new metrics
+        // Display the new metrics (but don't save automatically)
         setMetrics(result.metrics);
         toast.success('Generated new metrics');
+        setMetricsSaved(false); // Reset to allow saving
         
       } catch (error) {
         console.error('Error processing dataset:', error);
@@ -721,7 +749,7 @@ export default function QualityMetrics() {
           </div>
           <Link 
             href="/dashboard" 
-            className="inline-flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200 font-medium shadow border border-gray-200"
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" /> 
             Back to Dashboard
@@ -744,7 +772,7 @@ export default function QualityMetrics() {
                 <option value="">Select a dataset</option>
                 {datasets.map((dataset) => (
                   <option key={dataset._id} value={dataset._id}>
-                    {dataset.name}
+                    {dataset.name} ({dataset._id.substring(0, 8)}...)
                   </option>
                 ))}
               </select>
@@ -1279,6 +1307,9 @@ export default function QualityMetrics() {
           </div>
         )}
       </div>
+
+      {/* AI Chatbot */}
+      <Chatbot />
     </div>
   );
 }

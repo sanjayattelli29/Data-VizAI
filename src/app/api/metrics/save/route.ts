@@ -19,21 +19,23 @@ export async function POST(req: NextRequest) {
     }
 
     // Connect to MongoDB
-    const { db } = await connectToDatabase();
-
-    // Save metrics to database
-    const result = await db.collection('metrics').insertOne({
-      userId,
-      datasetId,
-      metrics,
-      timestamp: timestamp || new Date().toISOString(),
-      createdAt: new Date(),
-    });
-
-    return NextResponse.json({ 
+    const { db } = await connectToDatabase();    // Save metrics to the new user_metrics_cache collection
+    const result = await db.collection('user_metrics_cache').updateOne(
+      { userId, datasetId },
+      {
+        $set: {
+          userId,
+          datasetId,
+          metrics,
+          timestamp: timestamp || new Date().toISOString(),
+          updatedAt: new Date(),
+        }
+      },
+      { upsert: true }
+    );    return NextResponse.json({ 
       success: true, 
       message: 'Metrics saved successfully',
-      metricId: result.insertedId 
+      metricId: result.upsertedId 
     });
   } catch (error) {
     console.error('Error saving metrics:', error);
