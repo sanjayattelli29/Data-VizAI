@@ -16,7 +16,10 @@ import {
   ClockIcon,
   TrashIcon,
   EyeIcon,
-  TableCellsIcon
+  TableCellsIcon,
+  CloudArrowUpIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import Header from '@/components/Header';
 
@@ -64,6 +67,9 @@ export default function ProfilePage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedItem, setSelectedItem] = useState<UploadHistoryItem | null>(null);
+
+  // Constants for upload limits
+  const FREE_UPLOAD_LIMIT = 5;
 
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
@@ -219,6 +225,11 @@ export default function ProfilePage() {
     setItemToDelete(null);
   };
 
+  // Calculate upload usage
+  const currentUploads = datasets.length;
+  const remainingUploads = Math.max(0, FREE_UPLOAD_LIMIT - currentUploads);
+  const usagePercentage = Math.min((currentUploads / FREE_UPLOAD_LIMIT) * 100, 100);
+
   if (status === 'loading' || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -236,7 +247,8 @@ export default function ProfilePage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - User Profile */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
+            {/* Profile Information Card */}
             <div className="bg-white shadow rounded-lg overflow-hidden">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -438,6 +450,103 @@ export default function ProfilePage() {
                 )}
               </div>
             </div>
+
+            {/* Upload Usage Card */}
+            <div className="bg-white shadow rounded-lg overflow-hidden">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">Upload Usage</h2>
+                  <CloudArrowUpIcon className="h-6 w-6 text-indigo-500" />
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Usage Progress */}
+                  <div>
+                    <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                      <span>Used</span>
+                      <span>{currentUploads}/{FREE_UPLOAD_LIMIT}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          currentUploads >= FREE_UPLOAD_LIMIT 
+                            ? 'bg-red-500' 
+                            : currentUploads >= FREE_UPLOAD_LIMIT * 0.8 
+                              ? 'bg-yellow-500' 
+                              : 'bg-green-500'
+                        }`}
+                        style={{ width: `${usagePercentage}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Usage Stats */}
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                    <div className="text-center">
+                      <div className={`text-2xl font-bold ${
+                        currentUploads >= FREE_UPLOAD_LIMIT ? 'text-red-600' : 'text-green-600'
+                      }`}>
+                        {currentUploads}
+                      </div>
+                      <div className="text-sm text-gray-500">Uploads Used</div>
+                    </div>
+                    <div className="text-center">
+                      <div className={`text-2xl font-bold ${
+                        remainingUploads === 0 ? 'text-red-600' : 'text-blue-600'
+                      }`}>
+                        {remainingUploads}
+                      </div>
+                      <div className="text-sm text-gray-500">Remaining</div>
+                    </div>
+                  </div>
+
+                  {/* Status Message */}
+                  <div className="mt-4">
+                    {currentUploads >= FREE_UPLOAD_LIMIT ? (
+                      <div className="flex items-center text-red-600 bg-red-50 p-3 rounded-lg">
+                        <ExclamationTriangleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+                        <span className="text-sm">
+                           Reached your free upload limit. Upgrade to continue uploading datasets.
+                        </span>
+                      </div>
+                    ) : currentUploads >= FREE_UPLOAD_LIMIT * 0.8 ? (
+                      <div className="flex items-center text-yellow-700 bg-yellow-50 p-3 rounded-lg">
+                        <ExclamationTriangleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+                        <span className="text-sm">
+                          Running low on uploads. {remainingUploads} uploads remaining.
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-green-700 bg-green-50 p-3 rounded-lg">
+                        <CheckCircleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+                        <span className="text-sm">
+                          You have {remainingUploads} free uploads remaining.
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Call to Action */}
+                  <div className="pt-4">
+                    {currentUploads >= FREE_UPLOAD_LIMIT ? (
+                      <button
+                        className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors font-medium"
+                        onClick={() => {/* Add upgrade logic */}}
+                      >
+                        Upgrade Plan
+                      </button>
+                    ) : (
+                      <Link
+                        href="/dashboard/upload"
+                        className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors font-medium text-center block"
+                      >
+                        Upload Dataset
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           
           {/* Right Column - Upload History */}
@@ -512,7 +621,7 @@ export default function ProfilePage() {
                     ) : datasets.length > 0 ? (
                       <div className="bg-white shadow overflow-hidden sm:rounded-md">
                         <ul className="divide-y divide-gray-200">
-                          {datasets.slice(0, 5).map((dataset: unknown) => (
+                          {datasets.slice(0, 5).map((dataset: any) => (
                             <li key={dataset._id}>
                               <Link href={`/dashboard/data-table?id=${dataset._id}`} className="block hover:bg-gray-50">
                                 <div className="px-4 py-4 sm:px-6">
@@ -573,16 +682,19 @@ export default function ProfilePage() {
                           <thead className="bg-gray-50">
                             <tr>
                               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Dataset
+                                Dataset Name
                               </th>
                               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Date & Time
+                                Created
                               </th>
                               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Charts
+                                Metrics
                               </th>
                               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
+                                Visualizations
+                              </th>
+                              <th scope="col" className="relative px-6 py-3">
+                                <span className="sr-only">Actions</span>
                               </th>
                             </tr>
                           </thead>
@@ -590,10 +702,15 @@ export default function ProfilePage() {
                             {uploadHistory.map((item) => (
                               <tr key={item._id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm font-medium text-gray-900">{item.datasetName}</div>
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {item.datasetName}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    ID: {item.datasetId}
+                                  </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-gray-500">
+                                  <div className="text-sm text-gray-900">
                                     {new Date(item.createdAt).toLocaleDateString()}
                                   </div>
                                   <div className="text-sm text-gray-500">
@@ -602,26 +719,36 @@ export default function ProfilePage() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="text-sm text-gray-900">
-                                    {item.graphUrls.length} charts
+                                    {Object.keys(item.metrics).length} metrics
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {Object.keys(item.metrics).slice(0, 2).join(', ')}
+                                    {Object.keys(item.metrics).length > 2 && '...'}
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <div className="flex space-x-3">
-                                    <button
-                                      onClick={() => handleViewItem(item)}
-                                      className="text-indigo-600 hover:text-indigo-900"
-                                      title="View details"
-                                    >
-                                      <EyeIcon className="h-5 w-5" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteClick(item._id)}
-                                      className="text-red-600 hover:text-red-900"
-                                      title="Delete"
-                                    >
-                                      <TrashIcon className="h-5 w-5" />
-                                    </button>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center">
+                                    <ChartBarIcon className="h-5 w-5 text-indigo-500 mr-2" />
+                                    <span className="text-sm text-gray-900">
+                                      {item.graphUrls.length} charts
+                                    </span>
                                   </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                  <button
+                                    onClick={() => handleViewItem(item)}
+                                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                  >
+                                    <EyeIcon className="h-4 w-4 mr-1" />
+                                    View
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteClick(item._id)}
+                                    className="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                  >
+                                    <TrashIcon className="h-4 w-4 mr-1" />
+                                    Delete
+                                  </button>
                                 </td>
                               </tr>
                             ))}
@@ -636,30 +763,41 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-      
+
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
-            <p className="text-gray-500 mb-6">
-              Are you sure you want to delete this upload history? This will permanently remove all associated graphs and metrics.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={handleDeleteCancel}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                disabled={isDeleting}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <TrashIcon className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">
+                Delete Upload History
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Are you sure you want to delete this upload history? This action cannot be undone.
+                </p>
+              </div>
+              <div className="items-center px-4 py-3">
+                <div className="flex justify-center space-x-4">
+                  <button
+                    onClick={handleDeleteCancel}
+                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteConfirm}
+                    className="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
