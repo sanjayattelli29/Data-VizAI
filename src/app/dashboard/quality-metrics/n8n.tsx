@@ -12,7 +12,7 @@ const N8nInsights: React.FC<N8nInsightsProps> = ({ metrics, overallScore, topIss
   const [error, setError] = useState<string>('');
 
   // n8n webhook URL
-  const WEBHOOK_URL = 'https://n8n-n91d.onrender.com/webhook/355f72e9-adf0-4071-9ce4-e4bff5bf8ff3/chat';
+  const WEBHOOK_URL = 'https://n8n-render-free-yin1.onrender.com/webhook/355f72e9-adf0-4071-9ce4-e4bff5bf8ff3/chat';
 
   const sendToN8n = async (message: string): Promise<string> => {
     try {

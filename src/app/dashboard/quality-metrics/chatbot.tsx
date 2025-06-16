@@ -218,7 +218,7 @@ export const Chatbot: React.FC = () => {
         message: userMessage,
         datasetName: selectedDataset.name,
         userId: session?.user?.id,
-        webhookUrl: 'https://n8n-n91d.onrender.com/webhook/d2412453-2e1b-4a92-8f1c-e5ce65c0c461/chat'
+        webhookUrl: 'https://n8n-render-free-yin1.onrender.com/webhook/d2412453-2e1b-4a92-8f1c-e5ce65c0c461/chat'
       });
 
       // Prepare the request payload to match n8n chat widget format
@@ -238,7 +238,7 @@ export const Chatbot: React.FC = () => {
       console.log('Request payload:', JSON.stringify(requestPayload, null, 2));
 
       // Make the API call to n8n webhook
-      const response = await fetch('https://n8n-n91d.onrender.com/webhook/d2412453-2e1b-4a92-8f1c-e5ce65c0c461/chat', {
+      const response = await fetch('https://n8n-render-free-yin1.onrender.com/webhook/d2412453-2e1b-4a92-8f1c-e5ce65c0c461/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -425,26 +425,27 @@ export const Chatbot: React.FC = () => {
     <React.Fragment>
       <div className="fixed bottom-4 right-4 z-50">
         {/* Toggle Button */}
-        <button
-          onClick={() => setIsOpen(prev => !prev)}
-          className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group hover:scale-110 relative overflow-hidden"
-          title={isOpen ? "Close AI Assistant" : "Open AI Assistant"}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          {isOpen ? (
-            <svg className="w-5 h-5 transition-transform group-hover:rotate-90 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="w-6 h-6 transition-transform group-hover:scale-110 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          )}
-        </button>
+<button
+  onClick={() => setIsOpen(prev => !prev)}
+  className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group hover:scale-110 relative overflow-hidden"
+  title={isOpen ? "Close AI Assistant" : "Open AI Assistant"}
+>
+  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+  {isOpen ? (
+    <svg className="w-7 h-7 transition-transform group-hover:rotate-90 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  ) : (
+    <svg className="w-8 h-8 transition-transform group-hover:scale-110 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+  )}
+</button>
+
 
         {/* Chatbox - Reduced size */}
         {isOpen && (
-          <div className="absolute bottom-16 right-0 w-80 h-[480px] bg-white rounded-xl shadow-2xl border border-gray-200/50 flex flex-col overflow-hidden backdrop-blur-sm">
+            <div className="absolute bottom-16 right-0 w-[420px] h-[600px] bg-white rounded-xl shadow-2xl border border-gray-200/50 flex flex-col overflow-hidden backdrop-blur-sm">
             {/* Header */}
             <div className="p-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-700 text-white relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
