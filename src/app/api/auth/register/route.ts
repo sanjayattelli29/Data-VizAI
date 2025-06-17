@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hash } from 'bcrypt';
 import clientPromise from '@/lib/mongodb';
+import { sendEmail, generateWelcomeEmail } from '@/utils/emailService';
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,7 +38,27 @@ export async function POST(req: NextRequest) {
       password: hashedPassword,
       createdAt: new Date(),
       updatedAt: new Date(),
+    });    // Send welcome email
+    console.log('Attempting to send welcome email to new user:', { name, email });
+    const welcomeEmail = generateWelcomeEmail(name);
+    const emailSent = await sendEmail({
+      to: email,
+      subject: 'Welcome to Data-VizAI',
+      text: welcomeEmail.text,
+      html: welcomeEmail.html,
     });
+
+    if (!emailSent) {
+      console.error('Failed to send welcome email to:', email);
+      // We'll still create the account but let the user know about the email issue
+      return NextResponse.json(
+        { 
+          message: 'User registered successfully but welcome email could not be sent',
+          userId: result.insertedId 
+        },
+        { status: 201 }
+      );
+    }
 
     return NextResponse.json(
       { 
