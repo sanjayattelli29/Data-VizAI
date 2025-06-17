@@ -4,10 +4,28 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Script from 'next/script';
-import { ArrowUpTrayIcon, XMarkIcon, DocumentChartBarIcon, CpuChipIcon, BeakerIcon } from '@heroicons/react/24/outline';
+import { 
+  ArrowUpTrayIcon, 
+  XMarkIcon, 
+  DocumentChartBarIcon, 
+  CpuChipIcon, 
+  BeakerIcon,
+  ExclamationTriangleIcon 
+} from '@heroicons/react/24/outline';
 import Papa from 'papaparse';
 
 const RAZORPAY_KEY = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+
+// Razorpay Types
+interface RazorpayResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayWindow extends Window {
+  Razorpay: any; // This is acceptable as it's a third-party type
+}
 
 export default function UploadDataset() {
   const { data: session } = useSession();
@@ -19,12 +37,10 @@ export default function UploadDataset() {
   const [columns, setColumns] = useState<string[]>([]);
   const [datasetName, setDatasetName] = useState('');
   const [uploadCount, setUploadCount] = useState(0);
-  const [isLoadingUsage, setIsLoadingUsage] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [estimatedSize, setEstimatedSize] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
   const [isCalculatingSize, setIsCalculatingSize] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -73,7 +89,7 @@ export default function UploadDataset() {
         name: 'Data-VizAI',
         description: `Payment for dataset upload (${estimatedSize}MB)`,
         order_id: order.id,
-        handler: async function (response: any) {
+        handler: async function (response: RazorpayResponse) {
           try {
             const verifyResponse = await fetch('/api/payments/confirm-payment', {
               method: 'POST',
@@ -88,33 +104,31 @@ export default function UploadDataset() {
             });
 
             if (verifyResponse.ok) {
-              setPaymentStatus('success');
               setShowPaymentModal(false);
               // Continue with upload process
               processUpload();
             } else {
-              setPaymentStatus('failed');
               setError('Payment verification failed');
             }
-          } catch (error) {
-            setPaymentStatus('failed');
+          } catch {
             setError('Payment verification failed');
           }
         },
         prefill: {
-          name: 'User',
-          email: 'user@example.com',
+          name: session?.user?.name || 'User',
+          email: session?.user?.email || 'user@example.com',
         },
         theme: {
           color: '#3B82F6',
         },
       };
 
-      const paymentObject = new (window as any).Razorpay(options);
+      const razorpayWindow = window as unknown as RazorpayWindow;
+      const paymentObject = new razorpayWindow.Razorpay(options);
       paymentObject.open();
-    } catch (error) {
+    } catch (err) {
       setError('Failed to initialize payment');
-      console.error('Payment initialization error:', error);
+      console.error('Payment initialization error:', err);
     } finally {
       setIsProcessingPayment(false);
     }
@@ -136,7 +150,6 @@ export default function UploadDataset() {
   useEffect(() => {
     const fetchUploadCount = async () => {
       try {
-        setIsLoadingUsage(true);
         const response = await fetch('/api/datasets');
         if (response.ok) {
           const data = await response.json();
@@ -144,8 +157,6 @@ export default function UploadDataset() {
         }
       } catch (error) {
         console.error('Error fetching upload count:', error);
-      } finally {
-        setIsLoadingUsage(false);
       }
     };
 
@@ -321,18 +332,26 @@ export default function UploadDataset() {
       Papa.parse(file as File, {
         header: true,
         complete: async (results) => {
-          if (results.data && results.data.length > 0) {
-            const columnTypes = determineColumnTypes(results.data as Record<string, unknown>[], results.meta.fields || []);
-            
-            const dataset = {
-              name: datasetName,
-              columns: results.meta.fields?.map(field => ({
-                name: field,
-                type: columnTypes[field]
-              })) || [],
-              data: results.data
-            };
+          if (!results.data || results.data.length === 0) {
+            throw new Error('The CSV file appears to be empty');
+          }
 
+          if (!results.meta.fields || results.meta.fields.length === 0) {
+            throw new Error('No columns found in the CSV file');
+          }
+
+          const columnTypes = determineColumnTypes(results.data as Record<string, unknown>[], results.meta.fields);
+            
+          const dataset = {
+            name: datasetName,
+            columns: results.meta.fields.map(field => ({
+              name: field,
+              type: columnTypes[field]
+            })),
+            data: results.data
+          };
+
+          try {
             // Upload to API
             const response = await fetch('/api/datasets', {
               method: 'POST',
@@ -342,12 +361,23 @@ export default function UploadDataset() {
               body: JSON.stringify(dataset),
             });
 
-            if (response.ok) {
-              router.push('/dashboard/data-table');
-            } else {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Failed to upload dataset');
+            // Update the text with proper escaping
+            if (!response.ok) {
+              const contentType = response.headers.get("content-type");
+              if (contentType && contentType.indexOf("application/json") !== -1) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to upload dataset');
+              } else {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Failed to upload dataset');
+              }
             }
+
+            // Handle successful upload
+            await response.json(); // consume the response
+            router.push('/dashboard/data-table');
+          } catch (error) {
+            throw new Error(error instanceof Error ? error.message : 'An error occurred while uploading the dataset');
           }
         },
         error: (error) => {
@@ -356,6 +386,7 @@ export default function UploadDataset() {
       });
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred while uploading the dataset.');
+      console.error('Upload error:', error);
     } finally {
       setIsUploading(false);
     }
@@ -375,7 +406,7 @@ export default function UploadDataset() {
             <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">Dataset Upload Payment</h3>
             <div className="mt-2 px-7 py-3">
               <p className="text-sm text-gray-500 mb-4">
-                You have reached the free upload limit (5 datasets). To upload more datasets, you can purchase additional storage.
+                You&apos;ve reached the free upload limit. Select a file to see pricing for additional storage.
               </p>
               {isCalculatingSize ? (
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">

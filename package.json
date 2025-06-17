@@ -14,6 +14,7 @@
     "@heroicons/react": "^2.2.0",
     "@radix-ui/react-select": "^2.2.5",
     "@types/chart.js": "^2.9.41",
+    "@types/lodash": "^4.17.17",
     "@types/nodemailer": "^6.4.17",
     "@types/papaparse": "^5.3.16",
     "axios": "^1.9.0",
@@ -21,6 +22,7 @@
     "chart.js": "^4.4.9",
     "date-fns": "^4.1.0",
     "glob": "^11.0.2",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.513.0",
     "mongodb": "^6.16.0",
     "mongoose": "^8.15.0",
@@ -35,6 +37,7 @@
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",
+    "react-hotkeys-hook": "^5.1.0",
     "simple-statistics": "^7.8.8",
     "sonner": "^2.0.5"
   },
