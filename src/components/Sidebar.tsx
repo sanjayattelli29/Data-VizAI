@@ -21,7 +21,8 @@ import {
   Box,
   CircleDot,
   Radar,
-  BarChartBig // alternate for Histogram
+  BarChartBig, // alternate for Histogram
+  Brain // for AI Analysis
 } from 'lucide-react';
 
 
@@ -31,6 +32,7 @@ const navigation = [
   { name: 'Data Table', href: '/dashboard/data-table', icon: Table },
   { name: 'Upload Dataset', href: '/dashboard/upload', icon: Upload },
   { name: 'Quality Metrics', href: '/dashboard/quality-metrics', icon: ClipboardCheck },
+  { name: 'AI Analysis', href: '/dashboard/ai-analysis', icon: Brain },
   { name: 'Bar Charts', href: '/dashboard/bar-charts', icon: BarChart2 },
   { name: 'Line Charts', href: '/dashboard/line-charts', icon: LineChart },
   { name: 'Pie Charts', href: '/dashboard/pie-charts', icon: PieChart },
