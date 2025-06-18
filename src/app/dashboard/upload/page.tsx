@@ -416,20 +416,26 @@ export default function UploadDataset() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Dataset:</span>
-                    <span className="font-semibold">{fileName}</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Estimated Size:</span>
-                    <span className="font-semibold">{estimatedSize} MB</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-medium">
-                    <span className="text-gray-800">Total Price:</span>
-                    <span className="text-blue-600">₹{totalPrice}</span>
-                  </div>
-                </div>
+<div className="bg-gray-50 rounded-lg p-4 mb-4">
+  <div className="flex justify-between mb-2">
+    <span className="text-gray-800 font-semibold">Dataset:</span>
+    <span className="font-semibold text-gray-900">{fileName}</span>
+  </div>
+  <div className="flex justify-between mb-2">
+    <span className="text-gray-800 font-semibold">Estimated Size:</span>
+    <span className="font-semibold text-gray-900">{estimatedSize} MB</span>
+  </div>
+  <div className="flex justify-between text-lg font-semibold mb-2">
+    <span className="text-gray-900">Total Price:</span>
+    <span className="text-blue-700 font-bold">₹{totalPrice}</span>
+  </div>
+  <div>
+    <p className="text-sm font-medium text-blue-600">
+      We recommend using <span className="underline">net banking</span> for secure payment.
+    </p>
+  </div>
+</div>
+
               )}
             </div>
             <div className="flex justify-center gap-4 px-4 py-3">
@@ -525,6 +531,9 @@ export default function UploadDataset() {
             Transform your raw data into actionable insights with our advanced AI-powered analytics platform. 
             Upload your CSV file to begin intelligent data exploration and visualization.
           </p>
+          <p className="text-sm text-slate-500 mt-2">
+    Maximum file size: <strong>10MB</strong>.
+  </p>
           <div className="mt-6 flex justify-center space-x-6 text-sm text-slate-500">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
@@ -785,7 +794,6 @@ export default function UploadDataset() {
               <h4 className="text-lg font-semibold text-slate-800 mb-2">Upload Data</h4>
               <p className="text-slate-600">Upload your CSV file with just a few clicks</p>
               {/* Connector line */}
-              <div className="hidden md:block absolute top-8 left-16 w-full h-0.5 bg-gradient-to-r from-blue-300 to-green-300"></div>
             </div>
             
             <div className="relative">
@@ -795,7 +803,6 @@ export default function UploadDataset() {
               <h4 className="text-lg font-semibold text-slate-800 mb-2">AI Processing</h4>
               <p className="text-slate-600">Our AI analyzes patterns and data structure</p>
               {/* Connector line */}
-              <div className="hidden md:block absolute top-8 left-16 w-full h-0.5 bg-gradient-to-r from-green-300 to-purple-300"></div>
             </div>
             
             <div className="relative">
@@ -805,7 +812,6 @@ export default function UploadDataset() {
               <h4 className="text-lg font-semibold text-slate-800 mb-2">Generate Insights</h4>
               <p className="text-slate-600">Automatic visualization and trend detection</p>
               {/* Connector line */}
-              <div className="hidden md:block absolute top-8 left-16 w-full h-0.5 bg-gradient-to-r from-purple-300 to-orange-300"></div>
             </div>
             
             <div>

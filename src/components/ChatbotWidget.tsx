@@ -81,12 +81,11 @@ const shouldHideChatbot = pathname === '/dashboard/quality-metrics' || pathname 
     }
   };
 
-  const handleWelcomeClick = () => {
-    setShowWelcomeText(false);
-    setTimeout(() => {
-      setShowWelcomeText(true);
-    }, 3000); // Reappear after 3 seconds
-  };
+const handleWelcomeClick = () => {
+  setShowWelcomeText(false);
+  // Removed the setTimeout so it won't reappear automatically
+};
+
 
   // Prevent body scroll when iframe is focused
   useEffect(() => {
@@ -149,7 +148,7 @@ const shouldHideChatbot = pathname === '/dashboard/quality-metrics' || pathname 
             target.style.backgroundColor = '#007bff';
           }}
         >
-          👋 Hey! Need help? Click me!
+          👋 Hey! Need help?
           {/* Speech bubble tail */}
           <div
             style={{

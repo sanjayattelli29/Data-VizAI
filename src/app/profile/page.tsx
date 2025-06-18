@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, getSession } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { getAccessToken } from '@/lib/auth-utils';
 import { 
   UserCircleIcon, 
-  PhoneIcon, 
+  CurrencyRupeeIcon,
   EnvelopeIcon, 
   PencilIcon,
   ArrowUpTrayIcon,
@@ -16,7 +17,7 @@ import {
   ClockIcon,
   TrashIcon,
   EyeIcon,
-  TableCellsIcon,
+ InformationCircleIcon,
   CloudArrowUpIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon
@@ -45,15 +46,20 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      router.push('/auth/signin');
+    },
+  });
   const router = useRouter();
   
   const [profile, setProfile] = useState<UserProfile>({
-    name: '',
-    email: '',
+    name: session?.user?.name || '',
+    email: session?.user?.email || '',
     phone: '',
     bio: '',
-    imageUrl: ''
+    imageUrl: session?.user?.image || ''
   });
   
   const [uploadHistory, setUploadHistory] = useState<UploadHistoryItem[]>([]);
@@ -70,9 +76,18 @@ export default function ProfilePage() {
 
   // Constants for upload limits
   const FREE_UPLOAD_LIMIT = 5;
-
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.id) {
+    if (status === 'loading') return;
+    
+    if (status === 'authenticated' && session?.user) {
+      // Initialize profile with session data while loading
+      setProfile(prev => ({
+        ...prev,
+        name: session.user?.name || '',
+        email: session.user?.email || '',
+        imageUrl: session.user?.image || ''
+      }));
+      
       fetchUserProfile();
       fetchUploadHistory(session.user.id);
       fetchDatasets();
@@ -80,11 +95,16 @@ export default function ProfilePage() {
       router.push('/auth/signin');
     }
   }, [status, session, router]);
-
   const fetchUserProfile = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/profile');
+      const response = await fetch('/api/profile', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
       
       if (response.ok) {
         const data = await response.json();
@@ -92,7 +112,7 @@ export default function ProfilePage() {
           setProfile({
             name: data.profile.name || session?.user?.name || '',
             email: data.profile.email || session?.user?.email || '',
-            phone: data.profile.phone || '',
+            phone: data.profile.phone || 'Not provided',
             bio: data.profile.bio || '',
             imageUrl: data.profile.imageUrl || session?.user?.image || ''
           });
@@ -138,13 +158,37 @@ export default function ProfilePage() {
       setIsLoadingDatasets(false);
     }
   };
-
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    setError(''); // Clear any previous errors
+    
+    if (name === 'imageUrl') {
+      // Basic URL validation for image URLs
+      if (value && !value.match(/^(https?:\/\/.*)\.(jpg|jpeg|png|gif|bmp|svg)$/i)) {
+        setError('Please enter a valid image URL (must end with .jpg, .png, .gif, etc.)');
+      }
+    }
+    
     setProfile(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const validateImageUrl = (url: string) => {
+    if (!url) return true;
+    try {
+      const parsed = new URL(url);
+      const allowedDomains = [
+        'designwithsanjay.site',
+        'lh3.googleusercontent.com',
+        'avatars.githubusercontent.com',
+        'res.cloudinary.com'
+      ];
+      return allowedDomains.some(domain => parsed.hostname.includes(domain));
+    } catch {
+      return false;
+    }
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -154,19 +198,51 @@ export default function ProfilePage() {
       setIsSaving(true);
       setError('');
       
+      if (!session?.user?.id) {
+        setError('You must be logged in to update your profile');
+        setIsSaving(false);
+        return;
+      }
+
+      // Validate image URL
+      if (profile.imageUrl && !validateImageUrl(profile.imageUrl)) {
+        setError('Please use an allowed image hosting service (designwithsanjay.site, etc.)');
+        setIsSaving(false);
+        return;
+      }
+
+      const token = await getAccessToken();
+      if (!token) {
+        setError('Authentication failed. Please try signing in again.');
+        setIsSaving(false);
+        return;
+      }
+
       const response = await fetch('/api/profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(profile),
+        credentials: 'include',
+        body: JSON.stringify({
+          ...profile,
+          userId: session.user.id
+        }),
       });
+      
+      const data = await response.json();
       
       if (response.ok) {
         setIsEditing(false);
+        // Refresh session to update the user's image if it was changed
+        if (profile.imageUrl !== session.user.image) {
+          await fetch('/api/auth/session', { method: 'GET' });
+          window.location.reload(); // Refresh to update the session
+        }
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to update profile');
+        console.error('Profile update failed:', data);
+        setError(data.error || 'Failed to update profile');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -331,34 +407,7 @@ export default function ProfilePage() {
                         />
                       </div>
                       
-                      <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                          Phone
-                        </label>
-                        <input
-                          type="text"
-                          name="phone"
-                          id="phone"
-                          value={profile.phone}
-                          onChange={handleProfileChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
-                          Bio
-                        </label>
-                        <textarea
-                          name="bio"
-                          id="bio"
-                          rows={3}
-                          value={profile.bio}
-                          onChange={handleProfileChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                      </div>
-                      
+                  
                       <div>
                         <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">
                           Profile Image URL
@@ -430,13 +479,7 @@ export default function ProfilePage() {
                           <dd className="ml-auto text-sm text-gray-900">{profile.email}</dd>
                         </div>
                         
-                        <div className="py-3 flex items-center">
-                          <dt className="text-sm font-medium text-gray-500 flex items-center">
-                            <PhoneIcon className="h-5 w-5 text-gray-400 mr-2" />
-                            Phone
-                          </dt>
-                          <dd className="ml-auto text-sm text-gray-900">{profile.phone || 'Not provided'}</dd>
-                        </div>
+                      
                         
                         {profile.bio && (
                           <div className="py-3">
@@ -526,24 +569,31 @@ export default function ProfilePage() {
                     )}
                   </div>
 
-                  {/* Call to Action */}
-                  <div className="pt-4">
-                    {currentUploads >= FREE_UPLOAD_LIMIT ? (
-                      <button
-                        className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors font-medium"
-                        onClick={() => {/* Add upgrade logic */}}
-                      >
-                        Upgrade Plan
-                      </button>
-                    ) : (
-                      <Link
-                        href="/dashboard/upload"
-                        className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors font-medium text-center block"
-                      >
-                        Upload Dataset
-                      </Link>
-                    )}
-                  </div>
+              {/* Call to Action */}
+<div className="pt-4">
+  <button
+    className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors font-semibold"
+    onClick={() => (window.location.href = '/dashboard/upload')}
+  >
+    Upgrade Plan
+  </button>
+
+  <p className="mt-3 flex items-center gap-2 text-gray-700 text-sm justify-center">
+    <InformationCircleIcon className="w-5 h-5 text-indigo-600" />
+    <span>
+      Our platform is <strong>pay-as-you-go</strong>. Base price starts at{' '}
+      <strong>
+        <CurrencyRupeeIcon className="inline w-4 h-4" /> 49 per MB
+      </strong>
+      . For example, a <strong>2MB</strong> dataset costs{' '}
+      <strong>
+        <CurrencyRupeeIcon className="inline w-4 h-4" /> 98
+      </strong>
+      .
+    </span>
+  </p>
+</div>
+
                 </div>
               </div>
             </div>

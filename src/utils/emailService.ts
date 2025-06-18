@@ -242,6 +242,61 @@ export function generateWelcomeEmail(name: string): { text: string; html: string
   return { text, html };
 }
 
+export function generateOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+export function generateOTPEmail(otp: string): { text: string; html: string } {
+  const text = `Your DataViz-AI verification code is: ${otp}. This code will expire in 10 minutes.`;
+  
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Email Verification - DataViz-AI</title>
+    </head>
+    <body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <div style="max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        <div style="background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%); padding: 40px 30px; text-align: center;">
+          <h1 style="color: #ffffff; font-size: 36px; font-weight: 700; margin: 0 0 10px 0;">
+            Verify Your Email
+          </h1>
+        </div>
+        
+        <div style="padding: 40px 30px; text-align: center;">
+          <p style="font-size: 18px; color: #1a1a2e; margin-bottom: 30px;">
+            Here's your verification code:
+          </p>
+          <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1a1a2e;">
+              ${otp}
+            </span>
+          </div>
+          <p style="font-size: 14px; color: #666; margin-bottom: 0;">
+            This code will expire in 10 minutes.<br>
+            If you didn't request this code, please ignore this email.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return { text, html };
+}
+
+export async function sendOTPEmail(email: string, otp: string): Promise<boolean> {
+  const { text, html } = generateOTPEmail(otp);
+  return await sendEmail({
+    to: email,
+    subject: 'Verify Your Email - DataViz-AI',
+    text,
+    html,
+  });
+}
+
 
 
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -7,15 +8,12 @@ import { ObjectId } from 'mongodb';
 export async function GET() {
   try {
     // Check authentication
-    const session = await getServerSession();
-    if (!session || !session.user) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const userId = session.user.id;
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID not found' }, { status: 400 });
-    }
 
     // Connect to MongoDB
     const { db } = await connectToDatabase();
@@ -45,11 +43,15 @@ export async function GET() {
           imageUrl: user.image || '',
         }
       });
-    }
-
-    return NextResponse.json({ 
+    }    return NextResponse.json({ 
       success: true,
-      profile: userProfile
+      profile: {
+        name: userProfile.name || '',
+        email: userProfile.email || '',
+        phone: userProfile.phone || '',
+        bio: userProfile.bio || '',
+        imageUrl: userProfile.imageUrl || '',
+      }
     });
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -64,15 +66,22 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession();
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const session = await getServerSession(authOptions);
+    
+    // Also check Authorization header as backup
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.split('Bearer ')[1];
+    
+    if (!session?.user?.id && !token) {
+      console.log('Unauthorized request:', { 
+        hasSession: !!session, 
+        hasToken: !!token,
+        headers: Object.fromEntries(req.headers.entries())
+      });
+      return NextResponse.json({ error: 'Unauthorized - No valid session or token' }, { status: 401 });
     }
 
-    const userId = session.user.id;
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID not found' }, { status: 400 });
-    }
+    const userId = session?.user?.id || token;
 
     // Get request body
     const { name, email, phone, bio, imageUrl } = await req.json();
@@ -83,7 +92,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Connect to MongoDB
-    const { db } = await connectToDatabase();
+    const { db } = await connectToDatabase();    // Update the main user document first
+    await db.collection('users').updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          name,
+          email,
+          image: imageUrl || '',
+          updatedAt: new Date()
+        }
+      }
+    );
 
     // Create or update user profile
     const result = await db.collection('userprofiles').updateOne(

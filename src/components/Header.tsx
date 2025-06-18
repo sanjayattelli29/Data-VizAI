@@ -1,18 +1,19 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { 
   UserCircleIcon, 
   ChevronDownIcon, 
-  Cog6ToothIcon, 
   ArrowRightOnRectangleIcon,
   ChartBarIcon,
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -21,6 +22,8 @@ export default function Header() {
   const [profileImage, setProfileImage] = useState('');
   const [userName, setUserName] = useState('');
   const dropdownRef = useRef(null);
+  const router = useRouter();
+
 
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
@@ -46,6 +49,20 @@ export default function Header() {
     };
   }, []);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenuOpen]);
+
   const fetchUserProfile = async () => {
     try {
       const response = await fetch('/api/profile');
@@ -69,7 +86,7 @@ export default function Header() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8" aria-label="Global">
         {/* Logo */}
         <div className="flex lg:flex-1">
-          <Link href="/" className="-m-1.5 p-1.5 flex items-center space-x-3 group">
+          <Link href="/dashboard" className="-m-1.5 p-1.5 flex items-center space-x-3 group">
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300 ease-out">
               <ChartBarIcon className="w-5 h-5 text-white" />
             </div>
@@ -81,14 +98,14 @@ export default function Header() {
 
         {/* Mobile menu button */}
         <div className="flex lg:hidden">
-          <button
-            type="button"
-            className="-m-2.5 inline-flex items-center justify-center rounded-xl p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all duration-200"
-            onClick={() => setMobileMenuOpen(true)}
-          >
-            <span className="sr-only">Open main menu</span>
-            <Bars3Icon className="h-6 w-6" />
-          </button>
+           <button
+      type="button"
+      className="-m-2.5 inline-flex items-center justify-center rounded-xl p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all duration-200"
+      onClick={() => router.push('/profile')}
+    >
+      <span className="sr-only">Open main menu</span>
+      <Bars3Icon className="h-6 w-6" />
+    </button>
         </div>
 
         {/* Desktop Navigation */}
@@ -162,7 +179,7 @@ export default function Header() {
 
                 {/* Dropdown Menu */}
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl border border-slate-200/60 backdrop-blur-xl z-50 overflow-hidden">
+                  <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl border border-slate-200/60 backdrop-blur-xl z-50 overflow-hidden shadow-xl">
                     <div className="absolute inset-0 bg-white/95 backdrop-blur-xl"></div>
                     
                     {/* User Info Header */}
@@ -199,14 +216,6 @@ export default function Header() {
                       >
                         <UserCircleIcon className="w-4 h-4 mr-3 text-slate-400" />
                         Your Profile
-                      </Link>
-                      <Link
-                        href="/settings"
-                        className="flex items-center px-5 py-3 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
-                        onClick={() => setDropdownOpen(false)}
-                      >
-                        <Cog6ToothIcon className="w-4 h-4 mr-3 text-slate-400" />
-                        Settings
                       </Link>
                     </div>
 
@@ -248,10 +257,13 @@ export default function Header() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden" role="dialog" aria-modal="true">
-          <div className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-sm"></div>
-          <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white/95 backdrop-blur-xl px-6 py-6 sm:max-w-sm border-l border-slate-200/60">
+          {/* Backdrop with higher z-index */}
+          <div className="fixed inset-0 z-[9999] bg-slate-900/30 backdrop-blur-sm"></div>
+          
+          {/* Mobile menu panel with highest z-index */}
+          <div className="fixed inset-y-0 right-0 z-[10000] w-full overflow-y-auto bg-white/95 backdrop-blur-xl px-6 py-6 sm:max-w-sm border-l border-slate-200/60 shadow-2xl">
             <div className="flex items-center justify-between">
-              <Link href="/" className="-m-1.5 p-1.5 flex items-center space-x-3">
+              <Link href="/" className="-m-1.5 p-1.5 flex items-center space-x-3" onClick={() => setMobileMenuOpen(false)}>
                 <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 rounded-xl flex items-center justify-center">
                   <ChartBarIcon className="w-5 h-5 text-white" />
                 </div>
@@ -276,21 +288,21 @@ export default function Header() {
                     className="-mx-3 block rounded-xl px-4 py-3 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Features
+                    
                   </Link>
                   <Link
                     href="/pricing"
                     className="-mx-3 block rounded-xl px-4 py-3 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Pricing
+                    
                   </Link>
                   <Link
                     href="/about"
                     className="-mx-3 block rounded-xl px-4 py-3 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50/80 transition-all duration-200"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    About
+                    
                   </Link>
                 </div>
                 <div className="py-6">
