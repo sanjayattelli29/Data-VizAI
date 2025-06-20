@@ -101,7 +101,7 @@ export interface VisualizationRecommendation {
 }
 
 export const MEMO_EXPIRY = 5 * 60 * 1000; // 5 minutes
-export const GROQ_API_KEY = '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';
+export const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY;
 export const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 export const rowsPerPage = 20;
 

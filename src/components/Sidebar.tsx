@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { 
   Bars3Icon,
   XMarkIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 
 import {
@@ -13,6 +15,7 @@ import {
   Table,
   Upload,
   ClipboardCheck,
+  Brain,
   BarChart2,
   LineChart,
   PieChart,
@@ -21,34 +24,43 @@ import {
   Box,
   CircleDot,
   Radar,
-  BarChartBig, // alternate for Histogram
-  Brain // for AI Analysis
+  BarChartBig,
+  TrendingUp,
+  BarChart4
 } from 'lucide-react';
 
-
-
-const navigation = [
+const mainNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Data Table', href: '/dashboard/data-table', icon: Table },
   { name: 'Upload Dataset', href: '/dashboard/upload', icon: Upload },
   { name: 'Quality Metrics', href: '/dashboard/quality-metrics', icon: ClipboardCheck },
   { name: 'AI Analysis', href: '/dashboard/ai-analysis', icon: Brain },
+  { name: 'Pre-processing', href: '/dashboard/pre-processing', icon: ClipboardCheck },
+  { name: 'Knowledge', href: '/dashboard/knowledge', icon: Brain },
+  { name: 'Metrics Guide', href: '/dashboard/metrics-guide', icon: BarChart4  },
+  { name: 'Notes', href: '/dashboard/notes', icon: ClipboardCheck },
+ 
+];
+
+const chartNavigation = [
   { name: 'Bar Charts', href: '/dashboard/bar-charts', icon: BarChart2 },
   { name: 'Line Charts', href: '/dashboard/line-charts', icon: LineChart },
   { name: 'Pie Charts', href: '/dashboard/pie-charts', icon: PieChart },
   { name: 'Area Charts', href: '/dashboard/area-charts', icon: AreaChart },
-  { name: 'Histogram', href: '/dashboard/histogram', icon: BarChartBig }, // closest match
+  { name: 'Histogram', href: '/dashboard/histogram', icon: BarChartBig },
   { name: 'Scatter Plot', href: '/dashboard/scatter-plot', icon: ScatterChart },
   { name: 'Box Plot', href: '/dashboard/box-plot', icon: Box },
   { name: 'Bubble Chart', href: '/dashboard/bubble-chart', icon: CircleDot },
   { name: 'Radar Chart', href: '/dashboard/radar-chart', icon: Radar },
 ];
 
-
-
 export default function Sidebar() {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [chartsOpen, setChartsOpen] = useState(false);
+
+  // Check if any chart route is active
+  const isChartRouteActive = chartNavigation.some(item => pathname === item.href);
 
   return (
     <>
@@ -87,7 +99,8 @@ export default function Sidebar() {
           </div>
           <div className="mt-5 h-0 flex-1 overflow-y-auto">
             <nav className="space-y-1 px-2">
-              {navigation.map((item) => (
+              {/* Main Navigation */}
+              {mainNavigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -107,6 +120,58 @@ export default function Sidebar() {
                   {item.name}
                 </Link>
               ))}
+
+              {/* Charts Section */}
+              <div>
+                <button
+                  type="button"
+                  className={`group flex w-full items-center px-2 py-2 text-base font-medium rounded-md ${
+                    isChartRouteActive
+                      ? 'bg-indigo-100 text-indigo-900'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                  onClick={() => setChartsOpen(!chartsOpen)}
+                >
+                  <TrendingUp
+                    className={`mr-4 h-6 w-6 flex-shrink-0 ${
+                      isChartRouteActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  Charts
+                  {chartsOpen ? (
+                    <ChevronDownIcon className="ml-auto h-5 w-5" />
+                  ) : (
+                    <ChevronRightIcon className="ml-auto h-5 w-5" />
+                  )}
+                </button>
+
+                {/* Chart Submenu */}
+                {chartsOpen && (
+                  <div className="mt-1 space-y-1">
+                    {chartNavigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`group flex items-center pl-8 pr-2 py-2 text-sm font-medium rounded-md ${
+                          pathname === item.href
+                            ? 'bg-indigo-50 text-indigo-700'
+                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                        }`}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <item.icon
+                          className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                            pathname === item.href ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'
+                          }`}
+                          aria-hidden="true"
+                        />
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </nav>
           </div>
         </div>
@@ -120,7 +185,8 @@ export default function Sidebar() {
               <span className="text-2xl font-bold text-indigo-600"></span>
             </div>
             <nav className="mt-5 flex-1 space-y-1 bg-white px-2">
-              {navigation.map((item) => (
+              {/* Main Navigation */}
+              {mainNavigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -139,6 +205,57 @@ export default function Sidebar() {
                   {item.name}
                 </Link>
               ))}
+
+              {/* Charts Section */}
+              <div>
+                <button
+                  type="button"
+                  className={`group flex w-full items-center px-2 py-2 text-sm font-medium rounded-md ${
+                    isChartRouteActive
+                      ? 'bg-indigo-100 text-indigo-900'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                  onClick={() => setChartsOpen(!chartsOpen)}
+                >
+                  <TrendingUp
+                    className={`mr-3 h-6 w-6 flex-shrink-0 ${
+                      isChartRouteActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  Charts
+                  {chartsOpen ? (
+                    <ChevronDownIcon className="ml-auto h-4 w-4" />
+                  ) : (
+                    <ChevronRightIcon className="ml-auto h-4 w-4" />
+                  )}
+                </button>
+
+                {/* Chart Submenu */}
+                {chartsOpen && (
+                  <div className="mt-1 space-y-1">
+                    {chartNavigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`group flex items-center pl-8 pr-2 py-2 text-sm font-medium rounded-md ${
+                          pathname === item.href
+                            ? 'bg-indigo-50 text-indigo-700'
+                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                        }`}
+                      >
+                        <item.icon
+                          className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                            pathname === item.href ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'
+                          }`}
+                          aria-hidden="true"
+                        />
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </nav>
           </div>
         </div>

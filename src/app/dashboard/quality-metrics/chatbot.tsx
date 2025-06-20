@@ -3,6 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
+import Groq from "groq-sdk";
+
+// Initialize Groq client with browser support
+const groq = new Groq({ 
+  apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY as string,
+  dangerouslyAllowBrowser: true // Enable browser usage
+});
 
 interface Dataset {
   _id: string;
@@ -214,115 +221,31 @@ export const Chatbot: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log('Sending chat request:', {
-        message: userMessage,
-        datasetName: selectedDataset.name,
-        userId: session?.user?.id,
-        webhookUrl: 'https://n8n-render-free-yin1.onrender.com/webhook/d2412453-2e1b-4a92-8f1c-e5ce65c0c461/chat'
-      });
+      // Create context message with metrics data
+      const contextMessage = `Context: Working with dataset "${selectedDataset.name}". 
+The dataset has the following metrics:
+${JSON.stringify(currentMetrics, null, 2)}
 
-      // Prepare the request payload to match n8n chat widget format
-      const requestPayload = {
-        action: 'sendMessage',
-        chatInput: userMessage,
-        sessionId: `${session?.user?.id}_${selectedDataset._id}`,
-        // Add context as metadata
-        context: JSON.stringify({
-          datasetName: selectedDataset.name,
-          userId: session?.user?.id,
-          metrics: currentMetrics,
-          timestamp: new Date().toISOString()
-        })
-      };
+Based on this context, please answer the following question:
+${userMessage}`;
 
-      console.log('Request payload:', JSON.stringify(requestPayload, null, 2));
-
-      // Make the API call to n8n webhook
-      const response = await fetch('https://n8n-render-free-yin1.onrender.com/webhook/d2412453-2e1b-4a92-8f1c-e5ce65c0c461/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(requestPayload),
-        // Add timeout to prevent hanging requests
-        signal: AbortSignal.timeout(30000) // 30 seconds timeout
-      });
-
-      console.log('Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries())
-      });
-
-      if (!response.ok) {
-        let errorDetails = `HTTP ${response.status}: ${response.statusText}`;
-        
-        try {
-          const errorText = await response.text();
-          console.error('Error response body:', errorText);
-          
-          // Try to parse error as JSON
-          try {
-            const errorJson = JSON.parse(errorText);
-            if (errorJson.message) {
-              errorDetails = errorJson.message;
-            } else if (errorJson.error) {
-              errorDetails = errorJson.error;
-            }
-          } catch {
-            // Not JSON, use raw text
-            if (errorText) {
-              errorDetails = errorText;
-            }
+      // Call Groq API
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: "You are an AI data analysis assistant. You help users understand their data metrics and provide insights based on statistical analysis. Be concise and precise in your explanations."
+          },
+          {
+            role: "user",
+            content: contextMessage
           }
-        } catch (e) {
-          console.error('Could not read error response:', e);
-        }
-        
-        throw new Error(errorDetails);
-      }
+        ],
+        model: "llama-3.3-70b-versatile",
+      });
 
-      // Parse the successful response
-      const responseText = await response.text();
-      console.log('Response body:', responseText);
-
-      let botResponse = '';
-      
-      if (responseText) {
-        try {
-          const responseJson = JSON.parse(responseText);
-          console.log('Parsed response JSON:', responseJson);
-          
-          // Handle various response formats that n8n might return
-          if (responseJson.response) {
-            botResponse = responseJson.response;
-          } else if (responseJson.output) {
-            botResponse = responseJson.output;
-          } else if (responseJson.message) {
-            botResponse = responseJson.message;
-          } else if (responseJson.text) {
-            botResponse = responseJson.text;
-          } else if (responseJson.result) {
-            botResponse = responseJson.result;
-          } else if (typeof responseJson === 'string') {
-            botResponse = responseJson;
-          } else {
-            // Fallback: stringify the entire response
-            botResponse = JSON.stringify(responseJson, null, 2);
-          }
-        } catch (parseError) {
-          console.log('Response is not JSON, treating as plain text');
-          botResponse = responseText;
-        }
-      } else {
-        botResponse = 'I received your message but got an empty response. Please try rephrasing your question.';
-      }
-
-      if (!botResponse || botResponse.trim().length === 0) {
-        botResponse = 'I apologize, but I didn\'t receive a proper response. Could you please try asking your question again?';
-      }
+      const botResponse = completion.choices[0]?.message?.content || 
+        "I apologize, but I couldn't generate a response. Please try asking your question differently.";
 
       const botChatMessage: ChatMessage = {
         type: 'bot',
@@ -335,23 +258,11 @@ export const Chatbot: React.FC = () => {
     } catch (error) {
       console.error('Chat request error:', error);
       
-      let errorMessage = 'I\'m having trouble processing your request right now.';
-      
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          errorMessage = 'The request timed out. Please try again with a shorter question.';
-        } else if (error.message.includes('Failed to fetch')) {
-          errorMessage = 'I can\'t connect to my AI system right now. Please check your internet connection and try again.';
-        } else if (error.message.includes('Error in workflow')) {
-          errorMessage = 'There\'s an issue with my AI workflow. Please check your n8n workflow configuration and ensure all nodes are properly connected.';
-        } else {
-          errorMessage = `Error: ${error.message}`;
-        }
-      }
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
       
       const errorChatMessage: ChatMessage = {
         type: 'bot',
-        content: `${errorMessage}\n\nTroubleshooting tips:\n• Check your internet connection\n• Verify your n8n workflow is active and properly configured\n• Try asking a simpler question\n• Refresh the page if the problem persists`,
+        content: `I apologize, but I encountered an error: ${errorMessage}. Please try again.`,
         timestamp: new Date()
       };
       

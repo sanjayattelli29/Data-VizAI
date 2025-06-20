@@ -73,6 +73,7 @@ export default function ProfilePage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedItem, setSelectedItem] = useState<UploadHistoryItem | null>(null);
+  const [estimatedSize, setEstimatedSize] = useState(1);
 
   // Constants for upload limits
   const FREE_UPLOAD_LIMIT = 5;
@@ -811,6 +812,143 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
+
+          {/* Full Width Pricing Section */}
+          <div className="lg:col-span-3 mt-8">
+            <div className="bg-white shadow rounded-lg overflow-hidden">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Pay-as-you-go Pricing</h2>
+                  <CurrencyRupeeIcon className="h-6 w-6 text-indigo-500" />
+                </div>
+
+                <div className="space-y-6">
+                  {/* Pricing Explanation */}
+                  <div className="bg-indigo-50 p-4 rounded-lg">
+                    <p className="text-indigo-700 flex items-center gap-2">
+                      <InformationCircleIcon className="h-5 w-5" />
+                      <span>Base price: <strong>₹49 per MB</strong> of dataset size</span>
+                    </p>
+                  </div>
+
+                  {/* Size and Price Calculator */}
+                  <div className="space-y-4">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Estimate your dataset size (MB)
+                    </label>
+                    <div className="relative mt-2">
+                      <input
+                        type="range"
+                        min="1"
+                        max="20"
+                        step="1"
+                        value={estimatedSize}
+                        onChange={(e) => setEstimatedSize(Number(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                      />
+                      <div className="absolute -top-8 left-0 right-0">
+                        <div 
+                          className="bg-indigo-600 text-white px-2 py-1 rounded text-sm w-16 text-center"
+                          style={{ left: `calc(${(estimatedSize - 1) * 100 / 19}% - 2rem)` }}
+                        >
+                          {estimatedSize} MB
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Price Breakdown */}
+                    <div className="mt-8 bg-gray-50 rounded-lg p-6">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <p className="text-sm text-gray-500">Estimated Cost</p>
+                          <p className="text-3xl font-bold text-indigo-600 flex items-center">
+                            <CurrencyRupeeIcon className="h-8 w-8" />
+                            {estimatedSize * 49}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">What you get</p>
+                          <ul className="mt-2 space-y-2 text-sm text-gray-600">
+                            <li className="flex items-center gap-2">
+                              <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                              Full data analysis
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                              AI-powered insights
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                              Unlimited visualizations
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Example Scenarios */}
+                    <div className="mt-6">
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Example Pricing Scenarios</h4>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                          <div className="text-sm text-gray-500">Small Dataset</div>
+                          <div className="font-medium">1 MB</div>
+                          <div className="text-indigo-600 font-bold">₹49</div>
+                        </div>
+                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                          <div className="text-sm text-gray-500">Medium Dataset</div>
+                          <div className="font-medium">5 MB</div>
+                          <div className="text-indigo-600 font-bold">₹245</div>
+                        </div>
+                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                          <div className="text-sm text-gray-500">Large Dataset</div>
+                          <div className="font-medium">10 MB</div>
+                          <div className="text-indigo-600 font-bold">₹490</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div className="mt-8 text-center">
+                      <button
+                        onClick={() => router.push('/dashboard/upload')}
+                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        <ArrowUpTrayIcon className="h-5 w-5 mr-2" />
+                        Upload Your Dataset Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         </div>
       </div>
 

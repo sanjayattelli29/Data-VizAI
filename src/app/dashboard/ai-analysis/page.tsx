@@ -88,22 +88,35 @@ I can help you analyze this data. Try:
       setCurrentPage(0);
     }
   };
+  const handleSend = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    if (!input.trim() || !currentDataset) return;
 
-  const handleSend = async (inputValue?: string) => {
-    if (!inputValue || !currentDataset) return;
-
-    const userMessage: Message = { sender: 'user', text: inputValue };
+    const userMessage: Message = { sender: 'user', text: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
 
     try {
+      // Check if it's an AI query
+      if (input.trim().startsWith('@ai ')) {
+        const aiPrompt = input.trim().slice(4);
+        const aiResponse = await handleAIAnalysis(aiPrompt, currentDataset);
+        setMessages(prev => [...prev, { 
+          sender: 'bot', 
+          text: aiResponse || 'Sorry, I could not process your request.',
+          isAIEnhanced: true
+        }]);
+        setIsTyping(false);
+        return;
+      }
+
       // Handle analytics operations
       if (selectedOperation) {
         const operation = ANALYTICS_BUTTONS.find(b => b.id === selectedOperation);
         if (operation) {
-          let response = '';
-          const columnMatch = inputValue.match(/Analyze\s+(\w+)\s+using/);
+          let response = '';          const columnMatch = input.match(/Analyze\s+(\w+)\s+using/);
           const columnName = columnMatch ? columnMatch[1] : null;
           
           if (!columnName) {
@@ -344,26 +357,23 @@ I can help you analyze this data. Try:
                     ))}
                   </div>
                 </div>
-              )}
-
-              <div className="flex gap-3">
-              <input
-                type="text"
-                className="flex-1 border border-gray-300 rounded-lg px-4 py-3 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-                placeholder="Ask about the dataset... or select an operation above"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                />
-                <button
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || !currentDataset}
-                  className="text-white px-8 py-3 rounded-lg hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
-                  style={{ backgroundColor: '#1d4ed8' }}
-                >
-                  Send
-                </button>
-              </div>
+              )}              <form onSubmit={handleSend} className="flex gap-3">
+                <input
+                  type="text"
+                  className="flex-1 border border-gray-300 rounded-lg px-4 py-3 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+                  placeholder="Ask about the dataset... or select an operation above"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || !currentDataset}
+                    className="text-white px-8 py-3 rounded-lg hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                    style={{ backgroundColor: '#1d4ed8' }}
+                  >
+                    Send
+                  </button>
+                </form>
             </div>
           </div>
 

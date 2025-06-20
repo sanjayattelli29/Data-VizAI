@@ -12,7 +12,7 @@ const ChatbotWidget = () => {
   const pathname = usePathname();
   
   // Check if we should hide chatbot on this page
-const shouldHideChatbot = pathname === '/dashboard/quality-metrics' || pathname === '/dashboard/ai-analysis';
+const shouldHideChatbot = pathname === '/dashboard/quality-metrics' || pathname === '/dashboard/ai-analysis'  || pathname === '/dashboard/knowledge';
   
 
   useEffect(() => {

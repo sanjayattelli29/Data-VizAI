@@ -1271,11 +1271,11 @@ export default function QualityMetrics() {
                         50% { transform: translateY(-10px) rotate(180deg); }
                       }
                     `}</style>
-  <N8nInsights
-  metrics={analysisResult?.metric_scores || {}}
-  overallScore={analysisResult?.overall_score || 0}
-  topIssues={analysisResult?.top_issues || {}}
-/>
+                  <N8nInsights
+                  metrics={analysisResult?.metric_scores || {}}
+                  overallScore={analysisResult?.overall_score || 0}
+                  topIssues={analysisResult?.top_issues || {}}
+                />
 
                   
 

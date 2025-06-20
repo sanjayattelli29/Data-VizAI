@@ -1,62 +1,62 @@
 import React, { useState } from 'react';
 
-interface N8nInsightsProps {
+interface MistralInsightsProps {
   metrics: Record<string, number>;
   overallScore: number;
   topIssues: Record<string, number>;
 }
 
-const N8nInsights: React.FC<N8nInsightsProps> = ({ metrics, overallScore, topIssues }) => {
+const MistralInsights: React.FC<MistralInsightsProps> = ({ metrics, overallScore, topIssues }) => {
   const [insights, setInsights] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  // n8n webhook URL
-  const WEBHOOK_URL = 'https://n8n-render-free-yin1.onrender.com/webhook/355f72e9-adf0-4071-9ce4-e4bff5bf8ff3/chat';
+  // Mistral API configuration
+  const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
+  const MISTRAL_API_KEY = process.env.NEXT_PUBLIC_MISTRAL_API_KEY || '';
 
-  const sendToN8n = async (message: string): Promise<string> => {
+  const sendToMistral = async (message: string): Promise<string> => {
     try {
       const requestBody = {
-        action: 'sendMessage',
-        sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        chatInput: message,
-        message: message
+        model: "mistral-small-latest",
+        temperature: 0.3,
+        top_p: 0.9,
+        max_tokens: 4000,
+        stream: false,
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert data scientist and ML engineer. Provide comprehensive, well-structured analysis with clear sections and actionable recommendations. Format your response with numbered sections and bullet points for clarity."
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
+        response_format: {
+          type: "text"
+        }
       };
 
-      const response = await fetch(WEBHOOK_URL, {
+      const response = await fetch(MISTRAL_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          'Authorization': `Bearer ${MISTRAL_API_KEY}`,
         },
         body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        const simpleResponse = await fetch(WEBHOOK_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            chatInput: message,
-            sessionId: `session_${Date.now()}`
-          }),
-        });
-
-        if (!simpleResponse.ok) {
-          throw new Error(`Server error: ${response.status} - Check n8n workflow configuration`);
-        }
-
-        const simpleData = await simpleResponse.json();
-        return simpleData.output || simpleData.response || simpleData.message || simpleData.text || simpleData.result || 'Analysis completed';
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Mistral API error: ${response.status} - ${errorData.message || 'Check your API configuration'}`);
       }
 
       const data = await response.json();
-      return data.output || data.response || data.message || data.text || data.result || 'Analysis completed';
+      return data.choices?.[0]?.message?.content || 'Analysis completed';
     } catch (error) {
-      console.error('Error calling n8n webhook:', error);
-      throw new Error('Unable to connect to AI agent. Please check your n8n workflow.');
+      console.error('Error calling Mistral API:', error);
+      throw new Error('Unable to connect to Mistral AI. Please check your API key and configuration.');
     }
   };
 
@@ -70,21 +70,39 @@ const N8nInsights: React.FC<N8nInsightsProps> = ({ metrics, overallScore, topIss
       .join(', ');
 
     return `
-Please analyze my dataset and provide comprehensive insights covering:
+Act as an expert data scientist. Analyze this dataset and provide a comprehensive report with the following structure:
 
-1. Preprocessing Suggestions - What preprocessing steps should I apply?
-2. ML & DL Model Recommendations - Which models are suitable for my data?
-3. Production Readiness - Can this dataset be used directly in production?
-4. Monitoring & Alerts - What should I monitor for incoming datasets?
+## Dataset Analysis Report
 
-Dataset Metrics:
+**Dataset Metrics:**
 ${allMetrics}
 
-Overall Score: ${overallScore}
+**Overall Quality Score:** ${overallScore}/100
+**Top Issues Detected:** ${topIssuesStr}
 
-Top Issues: ${topIssuesStr}
+Please provide detailed analysis in exactly these 4 sections:
 
-Please provide detailed recommendations for each area.
+### 1. Data Quality & Preprocessing Recommendations
+- Identify specific data quality issues
+- Recommend preprocessing steps (cleaning, transformation, feature engineering)
+- Suggest handling methods for missing values, outliers, and inconsistencies
+
+### 2. ML & DL Model Recommendations  
+- Recommend suitable machine learning algorithms based on data characteristics
+- Suggest deep learning architectures if applicable
+- Explain why these models are appropriate for this dataset
+
+### 3. Production Readiness Assessment
+- Evaluate if the dataset is ready for production deployment
+- Identify gaps that need to be addressed before production
+- Recommend data validation and testing strategies
+
+### 4. Monitoring & Alerts Strategy
+- Define key metrics to monitor in production
+- Set up data drift detection mechanisms  
+- Recommend alert thresholds and monitoring dashboards
+
+Provide specific, actionable recommendations for each section with clear explanations.
     `.trim();
   };
 
@@ -94,7 +112,7 @@ Please provide detailed recommendations for each area.
 
     try {
       const fullPrompt = formatAllMetrics();
-      const response = await sendToN8n(fullPrompt);
+      const response = await sendToMistral(fullPrompt);
       setInsights(response);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to get insights';
@@ -125,65 +143,101 @@ Please provide detailed recommendations for each area.
   };
 
   const formatInsightText = (text: string) => {
-    // Remove asterisks
+    // Clean up the text
     let cleanText = text.replace(/\*\*/g, '').replace(/\*/g, '');
     
-    // Split into sections
-    const sections = cleanText.split(/(\d+\.\s*[A-Za-z\s&-]+)/);
+    // Split by sections (looking for numbered sections or ### headers)
+    const sections = cleanText.split(/(?=###\s*\d+\.|(?=\d+\.\s*[A-Za-z]))/);
     
     return sections.map((section, index) => {
-      if (section.match(/^\d+\.\s*[A-Za-z\s&-]+/)) {
-        // This is a header - match the gen-z style
+      const trimmedSection = section.trim();
+      if (!trimmedSection) return null;
+
+      // Check if this is a header section
+      const headerMatch = trimmedSection.match(/^(###\s*)?(\d+)\.\s*([A-Za-z\s&-]+)/);
+      
+      if (headerMatch) {
+        const sectionNumber = headerMatch[2];
+        const sectionTitle = headerMatch[3];
+        const content = trimmedSection.replace(/^(###\s*)?\d+\.\s*[A-Za-z\s&-]+/, '').trim();
+        
         return (
-          <div key={index} className="mb-6 mt-8 first:mt-0">
-            <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl border border-slate-200/50 p-6">
+          <div key={index} className="mb-8">
+            {/* Section Header */}
+            <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl border border-slate-200/50 p-6 mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">
-                    {section.match(/^\d+/)?.[0]}
-                  </span>
+                  <span className="text-white font-bold text-sm">{sectionNumber}</span>
                 </div>
                 <h3 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                  {section.replace(/^\d+\.\s*/, '')}
+                  {sectionTitle}
                 </h3>
               </div>
             </div>
-          </div>
-        );
-      } else if (section.trim()) {
-        // This is content - match the gen-z card style
-        const lines = section.trim().split('\n').filter(line => line.trim());
-        return (
-          <div key={index} className="mb-6">
-            <div className="backdrop-blur-sm bg-white/70 rounded-2xl border border-white/20 p-6">
-              {lines.map((line, lineIndex) => {
-                const trimmedLine = line.trim();
-                if (!trimmedLine) return null;
-                
-                // Check if line starts with bullet point pattern
-                if (trimmedLine.match(/^[•\-\*]\s*/)) {
+            
+            {/* Section Content */}
+            {content && (
+              <div className="backdrop-blur-sm bg-white/70 rounded-2xl border border-white/20 p-6">
+                {content.split('\n').map((line, lineIndex) => {
+                  const trimmedLine = line.trim();
+                  if (!trimmedLine) return null;
+                  
+                  if (trimmedLine.match(/^[-•]\s*/)) {
+                    return (
+                      <div key={lineIndex} className="flex items-start gap-3 mb-3">
+                        <div className="w-1.5 h-1.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-slate-700 leading-relaxed">
+                          {trimmedLine.replace(/^[-•]\s*/, '')}
+                        </p>
+                      </div>
+                    );
+                  }
+                  
                   return (
-                    <div key={lineIndex} className="flex items-start gap-3 mb-3">
-                      <div className="w-1.5 h-1.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <p className="text-slate-700 leading-relaxed">
-                        {trimmedLine.replace(/^[•\-\*]\s*/, '')}
-                      </p>
-                    </div>
+                    <p key={lineIndex} className="text-slate-700 leading-relaxed mb-3">
+                      {trimmedLine}
+                    </p>
                   );
-                }
-                
-                return (
-                  <p key={lineIndex} className="text-slate-700 leading-relaxed mb-3">
-                    {trimmedLine}
-                  </p>
-                );
-              })}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         );
+      } else {
+        // This is standalone content
+        if (trimmedSection.length > 20) {
+          return (
+            <div key={index} className="mb-6">
+              <div className="backdrop-blur-sm bg-white/70 rounded-2xl border border-white/20 p-6">
+                {trimmedSection.split('\n').map((line, lineIndex) => {
+                  const trimmedLine = line.trim();
+                  if (!trimmedLine) return null;
+                  
+                  if (trimmedLine.match(/^[-•]\s*/)) {
+                    return (
+                      <div key={lineIndex} className="flex items-start gap-3 mb-3">
+                        <div className="w-1.5 h-1.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p className="text-slate-700 leading-relaxed">
+                          {trimmedLine.replace(/^[-•]\s*/, '')}
+                        </p>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <p key={lineIndex} className="text-slate-700 leading-relaxed mb-3">
+                      {trimmedLine}
+                    </p>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
       }
+      
       return null;
-    });
+    }).filter(Boolean);
   };
 
   return (
@@ -340,4 +394,4 @@ Please provide detailed recommendations for each area.
   );
 };
 
-export default N8nInsights;
+export default MistralInsights;

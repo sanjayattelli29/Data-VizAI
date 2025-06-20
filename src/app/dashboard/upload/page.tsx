@@ -375,7 +375,7 @@ export default function UploadDataset() {
 
             // Handle successful upload
             await response.json(); // consume the response
-            router.push('/dashboard/data-table');
+            router.push('/dashboard/quality-metrics');
           } catch (error) {
             throw new Error(error instanceof Error ? error.message : 'An error occurred while uploading the dataset');
           }
