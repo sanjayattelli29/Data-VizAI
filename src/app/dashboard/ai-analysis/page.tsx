@@ -88,6 +88,67 @@ I can help you analyze this data. Try:
       setCurrentPage(0);
     }
   };
+  const handleAnalyticsOperation = async (columnName: string) => {
+    if (!selectedOperation || !currentDataset) return;
+  
+    const userMessage: Message = { sender: 'user', text: `Analyze ${columnName} using ${selectedOperation}` };
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+  
+    try {
+      const operation = ANALYTICS_BUTTONS.find(b => b.id === selectedOperation);
+      if (operation) {
+        let response = '';
+        const column = currentDataset.columns.find(c => c.name === columnName);
+        if (!column) {
+          response = `Column "${columnName}" not found in the dataset.`;
+        } else {
+          // Perform the analysis based on the operation
+          switch (operation.id) {
+            case 'average':
+              if (column.type === 'numeric') {
+                const values = currentDataset.data.map(row => Number(row[columnName])).filter(n => !isNaN(n));
+                const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                response = `The average of ${columnName} is ${avg.toFixed(2)}.`;
+              } else {
+                response = `Cannot calculate average for non-numeric column "${columnName}".`;
+              }
+              break;
+
+            case 'null_count':
+              const nullCount = currentDataset.data.filter(row => row[columnName] === null || row[columnName] === undefined || row[columnName] === '').length;
+              response = `Found ${nullCount} null or empty values in column "${columnName}".`;
+              break;
+
+            case 'unique_values':
+              const uniqueValues = [...new Set(currentDataset.data.map(row => row[columnName]))];
+              response = `Found ${uniqueValues.length} unique values in column "${columnName}".\nUnique values: ${uniqueValues.slice(0, 10).join(', ')}${uniqueValues.length > 10 ? '...' : ''}`;
+              break;
+
+            // Add more cases for other operations...
+
+            default:
+              response = `Analysis operation "${operation.label}" is not implemented yet.`;
+          }
+        }
+        
+        const botMessage: Message = { sender: 'bot', text: response, isAIEnhanced: true };
+        setMessages(prev => [...prev, botMessage]);
+      }
+    } catch (error) {
+      console.error('Error processing message:', error);
+      const errorMessage: Message = {
+        sender: 'bot',
+        text: 'Sorry, there was an error processing your request. Please try again.',
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+      setSelectedOperation(null);
+      setShowColumnSelection(false);
+    }
+  };
+
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
     
@@ -95,13 +156,14 @@ I can help you analyze this data. Try:
 
     const userMessage: Message = { sender: 'user', text: input };
     setMessages(prev => [...prev, userMessage]);
+    const textToSend = input;
     setInput('');
     setIsTyping(true);
 
     try {
       // Check if it's an AI query
-      if (input.trim().startsWith('@ai ')) {
-        const aiPrompt = input.trim().slice(4);
+      if (textToSend.trim().startsWith('@ai ')) {
+        const aiPrompt = textToSend.trim().slice(4);
         const aiResponse = await handleAIAnalysis(aiPrompt, currentDataset);
         setMessages(prev => [...prev, { 
           sender: 'bot', 
@@ -111,65 +173,15 @@ I can help you analyze this data. Try:
         setIsTyping(false);
         return;
       }
-
-      // Handle analytics operations
-      if (selectedOperation) {
-        const operation = ANALYTICS_BUTTONS.find(b => b.id === selectedOperation);
-        if (operation) {
-          let response = '';          const columnMatch = input.match(/Analyze\s+(\w+)\s+using/);
-          const columnName = columnMatch ? columnMatch[1] : null;
-          
-          if (!columnName) {
-            response = "Please select a column to analyze.";
-          } else {
-            const column = currentDataset.columns.find(c => c.name === columnName);
-            if (!column) {
-              response = `Column "${columnName}" not found in the dataset.`;
-            } else {
-              // Perform the analysis based on the operation
-              switch (operation.id) {
-                case 'average':
-                  if (column.type === 'numeric') {
-                    const values = currentDataset.data.map(row => Number(row[columnName])).filter(n => !isNaN(n));
-                    const avg = values.reduce((a, b) => a + b, 0) / values.length;
-                    response = `The average of ${columnName} is ${avg.toFixed(2)}.`;
-                  } else {
-                    response = `Cannot calculate average for non-numeric column "${columnName}".`;
-                  }
-                  break;
-
-                case 'null_count':
-                  const nullCount = currentDataset.data.filter(row => row[columnName] === null || row[columnName] === undefined || row[columnName] === '').length;
-                  response = `Found ${nullCount} null or empty values in column "${columnName}".`;
-                  break;
-
-                case 'unique_values':
-                  const uniqueValues = [...new Set(currentDataset.data.map(row => row[columnName]))];
-                  response = `Found ${uniqueValues.length} unique values in column "${columnName}".\nUnique values: ${uniqueValues.slice(0, 10).join(', ')}${uniqueValues.length > 10 ? '...' : ''}`;
-                  break;
-
-                // Add more cases for other operations...
-
-                default:
-                  response = `Analysis operation "${operation.label}" is not implemented yet.`;
-              }
-            }
-          }
-          
-          const botMessage: Message = { sender: 'bot', text: response, isAIEnhanced: true };
-          setMessages(prev => [...prev, botMessage]);
-        }
-      } else {
-        // Handle regular chat messages using existing AI processing
-        const aiPrompt = inputValue.startsWith('@ai ') ? inputValue.slice(4) : inputValue;
-        const aiResponse = await handleAIAnalysis(aiPrompt, currentDataset);
-        
-        setMessages(prev => [...prev, { 
-          sender: 'bot', 
-          text: aiResponse,
-          isAIEnhanced: inputValue.startsWith('@ai ')
-        }]);
-      }
+      
+      const aiPrompt = textToSend.startsWith('@ai ') ? textToSend.slice(4) : textToSend;
+      const aiResponse = await handleAIAnalysis(aiPrompt, currentDataset);
+      
+      setMessages(prev => [...prev, { 
+        sender: 'bot', 
+        text: aiResponse,
+        isAIEnhanced: textToSend.startsWith('@ai ')
+      }]);
     } catch (error) {
       console.error('Error processing message:', error);
       const errorMessage: Message = {
@@ -344,10 +356,8 @@ I can help you analyze this data. Try:
                       <button
                         key={column.name}
                         onClick={() => {
-                          const value = `Analyze ${column.name} using ${selectedOperation}`;
-                          setInput(value);
                           setShowColumnSelection(false);
-                          handleSend(value);
+                          handleAnalyticsOperation(column.name);
                         }}
                         className="flex flex-col items-start p-3 rounded-lg text-sm bg-white hover:bg-blue-50 border border-blue-200 transition-colors group"
                       >
@@ -480,52 +490,4 @@ const ANALYTICS_BUTTONS: AnalyticsButton[] = [
   { id: 'percentile_split', label: 'Percentiles', description: 'Split into percentiles', icon: '📐' },
 ];
 
-// [1] Chart Renderer and Visualize Button
-function ChartRenderer({ type, data, columns }) {
-  // Use getChartConfig to get chart config and render the appropriate Recharts chart
-  // ... implementation ...
-  return <div>Chart for {type}</div>;
-}
-
-// [2] Explain Button for AI Enhanced Replies
-// In the chat message rendering, if m.isAIEnhanced, show a 📘 Explain button that calls getAIExplanation and displays the explanation.
-
-// [3] Voice Input Feature
-function useVoiceInput({ onResult }) {
-  const recognitionRef = useRef(null);
-  const [active, setActive] = useState(false);
-  useEffect(() => {
-    if (!('webkitSpeechRecognition' in window)) return;
-    const recognition = new window.webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      onResult(transcript);
-      setActive(false);
-    };
-    recognition.onend = () => setActive(false);
-    recognitionRef.current = recognition;
-  }, [onResult]);
-  const start = () => {
-    recognitionRef.current && recognitionRef.current.start();
-    setActive(true);
-  };
-  const stop = () => {
-    recognitionRef.current && recognitionRef.current.stop();
-    setActive(false);
-  };
-  return { start, stop, active };
-}
-
-// [4] Threaded Follow-Ups
-// In handleAIAnalysis, inject memory.lastQuery, lastColumns, lastStats into the context for follow-up queries.
-
-// [5] Live Chart on Column Hover
-// In the preview table, on column header hover, show a tooltip with mean/nulls/unique and a mini Recharts chart using getColumnStats().
-
-// [6] Remove unused imports and fix linter errors.
-
-// [7] Natural language filters in chat
-// [8] External data API support in handleAIAnalysis
+// Add any additional utility functions or types here if needed
