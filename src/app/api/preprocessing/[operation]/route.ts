@@ -13,7 +13,7 @@ interface Dataset {
   data: Record<string, string | number | null>[];
 }
 
-interface DataRow extends Record<string, string | number | null> {}
+type DataRow = Record<string, string | number | null>;
 
 export async function POST(
   request: NextRequest,
@@ -21,11 +21,12 @@ export async function POST(
 ) {
   try {
     const { dataset } = await request.json();
+    const operation = params.operation;
 
     // Process the dataset based on the operation
     let processedDataset = { ...dataset };
     
-    switch (params.operation) {
+    switch (operation) {
       case 'missing-values':
         processedDataset = await handleMissingValues(processedDataset);
         break;

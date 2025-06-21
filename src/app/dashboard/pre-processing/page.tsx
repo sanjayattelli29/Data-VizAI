@@ -334,12 +334,108 @@ export default function PreProcessing() {
                 </option>
               ))}
             </select>
-          </div>
-
-          {/* Dataset Preview and Preprocessing Options */}
+          </div>          {/* Dataset Preview and Preprocessing Options */}
           {currentDataset && (
             <>
-              <div className="bg-white rounded-lg shadow-md border border-gray-100 p-6 mb-6">
+              <div className="bg-white rounded-lg shadow-md border border-gray-100 p-6">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-6">Preprocessing Options</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                  {preprocessingOptions.map((option) => (
+                    <div 
+                      key={option.id} 
+                      className={`relative border rounded-lg p-5 transition-all duration-200 cursor-pointer 
+                        ${option.color} hover:shadow-lg hover:scale-[1.02] transform`}
+                      onClick={() => handleOptionToggle(option.id)}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <input
+                          type="checkbox"
+                          id={option.id}
+                          checked={selectedOptions.includes(option.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleOptionToggle(option.id);
+                          }}
+                          className="mt-1.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <div className={`p-2.5 rounded-lg ${option.iconColor} flex items-center justify-center`}>
+                              {option.icon}
+                            </div>
+                            <label 
+                              htmlFor={option.id} 
+                              className="text-lg font-medium text-gray-800 truncate block cursor-pointer"
+                            >
+                              {option.title}
+                            </label>
+                          </div>
+                          <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
+                            {option.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col space-y-4">
+                  {processingStatus && (
+                    <div className="bg-blue-50 text-blue-700 p-4 rounded-lg border border-blue-100">
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        {processingStatus}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center">
+                    <div className="flex space-x-4">
+                      {processedData && (
+                        <button
+                          onClick={downloadProcessedData}
+                          className="px-6 py-2.5 rounded-lg text-blue-600 font-medium border border-blue-600 hover:bg-blue-50 flex items-center"
+                        >
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          Download Processed Data
+                        </button>
+                      )}
+                      <button
+                        onClick={handlePreprocess}
+                        disabled={selectedOptions.length === 0 || isProcessing}
+                        className={`px-6 py-2.5 rounded-lg text-white font-medium transition-colors flex items-center
+                          ${selectedOptions.length === 0 || isProcessing
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700'}
+                        `}
+                      >
+                        {isProcessing ? (
+                          <span className="flex items-center space-x-2">
+                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            <span>Processing...</span>
+                          </span>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Preprocess Dataset
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>                </div>
+              </div>
+
+              {/* Dataset Preview Section */}
+              <div className="bg-white rounded-lg shadow-md border border-gray-100 p-6 mt-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
                     <div className="bg-purple-100 p-2 rounded-lg mr-3">
@@ -449,167 +545,6 @@ export default function PreProcessing() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                       </svg>
                     </button>
-                  </div>
-                </div>
-              </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              <div className="bg-white rounded-lg shadow-md border border-gray-100 p-6">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6">Preprocessing Options</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                  {preprocessingOptions.map((option) => (
-                    <div 
-                      key={option.id} 
-                      className={`relative border rounded-lg p-5 transition-all duration-200 cursor-pointer 
-                        ${option.color} hover:shadow-lg hover:scale-[1.02] transform`}
-                      onClick={() => handleOptionToggle(option.id)}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <input
-                          type="checkbox"
-                          id={option.id}
-                          checked={selectedOptions.includes(option.id)}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            handleOptionToggle(option.id);
-                          }}
-                          className="mt-1.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <div className={`p-2.5 rounded-lg ${option.iconColor} flex items-center justify-center`}>
-                              {option.icon}
-                            </div>
-                            <label 
-                              htmlFor={option.id} 
-                              className="text-lg font-medium text-gray-800 truncate block cursor-pointer"
-                            >
-                              {option.title}
-                            </label>
-                          </div>
-                          <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
-                            {option.description}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-col space-y-4">
-                  {processingStatus && (
-                    <div className="bg-blue-50 text-blue-700 p-4 rounded-lg border border-blue-100">
-                      <div className="flex items-center">
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        {processingStatus}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex space-x-4">
-                      {processedData && (
-                        <button
-                          onClick={downloadProcessedData}
-                          className="px-6 py-2.5 rounded-lg text-blue-600 font-medium border border-blue-600 hover:bg-blue-50 flex items-center"
-                        >
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          Download Processed Data
-                        </button>
-                      )}
-                      <button
-                        onClick={handlePreprocess}
-                        disabled={selectedOptions.length === 0 || isProcessing}
-                        className={`px-6 py-2.5 rounded-lg text-white font-medium transition-colors flex items-center
-                          ${selectedOptions.length === 0 || isProcessing
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700'}
-                        `}
-                      >
-                        {isProcessing ? (
-                          <span className="flex items-center space-x-2">
-                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
-                            <span>Processing...</span>
-                          </span>
-                        ) : (
-                          <>
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Preprocess Dataset
-                          </>
-                        )}
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
