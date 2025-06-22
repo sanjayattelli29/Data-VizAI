@@ -8,6 +8,13 @@
   [![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev/)
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-blueviolet?logo=tailwind-css)](https://tailwindcss.com/)
   [![Node.js](https://img.shields.io/badge/Node.js-20.x-green?logo=node.js)](https://nodejs.org/)
+  [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?logo=mongodb)](https://www.mongodb.com/)
+  [![Flask](https://img.shields.io/badge/Flask-ML_Services-lightgrey?logo=flask)](https://flask.palletsprojects.com/)
+  [![n8n](https://img.shields.io/badge/n8n-AI_Agent-red?logo=n8n)](https://n8n.io/)
+  [![Groq](https://img.shields.io/badge/Groq-AI_LLM-orange?logo=groq)](https://groq.com/)
+  [![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0-brightgreen?logo=openapiinitiative)](https://www.openapis.org/)
+  [![Render](https://img.shields.io/badge/Render-Hosting-purple?logo=render)](https://render.com/)
+  [![Netlify](https://img.shields.io/badge/Netlify-Deployment-blue?logo=netlify)](https://www.netlify.com/)
 
 
   <div align="center" style="margin: 30px 0;">
@@ -19,7 +26,55 @@
 
 ## 🎥 See Data-VizAI in Action
 
-[![Data-VizAI Demo](https://img.youtube.com/vi/CkeMWDcaAVs/0.jpg)](https://www.youtube.com/watch?v=CkeMWDcaAVs)
+<div align="center">
+
+### 🎬 Watch Our Product Demo Video
+*Experience the power of AI-driven data analysis in just 3 minutes*
+
+<table>
+<tr>
+<td width="60%">
+
+[![Data-VizAI Demo Video](https://img.youtube.com/vi/CkeMWDcaAVs/0.jpg)](https://www.youtube.com/watch?v=CkeMWDcaAVs)
+
+<div align="center">
+  
+[![▶️ WATCH DEMO VIDEO](https://img.shields.io/badge/▶️_WATCH_DEMO_VIDEO-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=CkeMWDcaAVs)
+
+</div>
+
+</td>
+<td width="40%">
+
+### 🚀 What You'll See:
+
+✨ **Instant Upload** - Drop any CSV and watch magic happen
+
+🤖 **AI Analysis** - 26+ quality metrics in seconds
+
+📊 **Smart Visualizations** - Interactive charts that tell your data's story
+
+🔧 **Auto Preprocessing** - AI fixes data issues automatically
+
+💬 **Natural Language Chat** - Ask questions, get insights instantly
+
+📈 **Deep Learning Insights** - TabNet model predictions in action
+
+---
+
+### ⏱️ Demo Highlights
+**Duration:** 3 minutes of pure data magic  
+**Features:** Full workflow from upload to insights  
+**Use Case:** Real business dataset analysis
+
+</td>
+</tr>
+</table>
+
+### 🎯 Ready to transform your data analysis workflow?
+See how Data-VizAI turns hours of manual work into minutes of AI-powered insights.
+
+</div>
 
 ## 🌟 Our Vision
 
