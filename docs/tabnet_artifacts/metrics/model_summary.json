@@ -1,0 +1,21 @@
+{
+    "Best Regression Model": "tabnet_regressor",
+    "Best RMSE": 28.85043674495797,
+    "Best Classification Model": "tabnet_classifier",
+    "Best Accuracy": 0.29898403483309144,
+    "Accuracy": 0.29898403483309144,
+    "Precision": 0.14826787112807283,
+    "Recall": 0.29898403483309144,
+    "F1-Score": 0.13879752986971242,
+    "ROC-AUC": 0.4937723776829689,
+    "Log Loss": 1.3823812597301,
+    "MAE": 24.983345354926374,
+    "MSE": 832.347700374821,
+    "RMSE": 28.85043674495797,
+    "R\u00b2 Score": -0.010928667576540985,
+    "Cohen's Kappa": -0.0004656462311216636,
+    "Balanced Accuracy": 0.24970770947487633,
+    "Hinge Loss": "N/A",
+    "Gini Coefficient": -0.012455244634062224,
+    "Chi-Square (Z\u00b2)": "N/A"
+}

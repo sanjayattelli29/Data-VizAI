@@ -1,0 +1,17 @@
+Model,Metric,Value
+tabnet_regressor,MSE,832.347700374821
+tabnet_regressor,RMSE,28.85043674495797
+tabnet_regressor,MAE,24.983345354926374
+tabnet_regressor,R² Score,-0.010928667576540985
+tabnet_regressor,Explained Variance,-0.0069914237480674934
+tabnet_regressor,Median Absolute Error,24.77085159301758
+tabnet_regressor,Mean Absolute Percentage Error,292.1001464814379
+tabnet_classifier,Accuracy,0.29898403483309144
+tabnet_classifier,Balanced Accuracy,0.24970770947487633
+tabnet_classifier,Precision,0.14826787112807283
+tabnet_classifier,Recall,0.29898403483309144
+tabnet_classifier,F1-Score,0.13879752986971242
+tabnet_classifier,Cohen's Kappa,-0.0004656462311216636
+tabnet_classifier,ROC-AUC,0.4937723776829689
+tabnet_classifier,Log Loss,1.3823812597301
+tabnet_classifier,Gini Coefficient,-0.012455244634062224

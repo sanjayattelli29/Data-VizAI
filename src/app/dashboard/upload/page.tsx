@@ -48,7 +48,7 @@ export default function UploadDataset() {
   // Constants
   const FREE_UPLOAD_LIMIT = 5;
   const BYTES_PER_CELL = 12;
-  const PRICE_PER_MB = 2;
+  const PRICE_PER_MB = 49;
 
   // Calculate estimated size and price
   const calculateEstimatedSize = (rows: number, cols: number) => {
