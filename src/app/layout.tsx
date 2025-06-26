@@ -272,6 +272,12 @@ export default function RootLayout({
           `}
         </Script>
 
+        {/* Traff Analytics */}
+        <Script
+          src="https://traff.netlify.app/cdn.js"
+          strategy="afterInteractive"
+        />
+
         {/* Schema.org breadcrumb for better navigation understanding */}
         <nav aria-label="Breadcrumb" style={{ display: 'none' }}>
           <script type="application/ld+json">
