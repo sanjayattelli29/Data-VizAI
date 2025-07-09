@@ -54,6 +54,26 @@ export const Chatbot: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const chatboxRef = useRef<HTMLDivElement>(null);
 
+  // Function to log chat conversation to n8n webhook
+  const logChatToWebhook = async (question: string, answer: string) => {
+    try {
+      await fetch("https://n8n.editwithsanjay.in/webhook/log-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          question: question,
+          answer: answer
+        })
+      });
+      console.log('Chat logged to n8n successfully');
+    } catch (error) {
+      console.error('Failed to log chat to n8n:', error);
+      // Don't show error to user as this is background logging
+    }
+  };
+
   // Initialize chatbot with welcome message
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -255,6 +275,9 @@ ${userMessage}`;
       
       setMessages(prev => [...prev, botChatMessage]);
       
+      // Log the conversation to n8n webhook
+      logChatToWebhook(userMessage, botResponse);
+      
     } catch (error) {
       console.error('Chat request error:', error);
       
@@ -299,7 +322,7 @@ ${userMessage}`;
     conversationText += `Export Date: ${new Date().toLocaleString()}\n`;
     conversationText += `${'='.repeat(50)}\n\n`;
 
-    messages.forEach((message, index) => {
+    messages.forEach((message) => {
       const timestamp = message.timestamp.toLocaleString();
       const sender = message.type === 'user' ? 'You' : 'AI Assistant';
       conversationText += `[${timestamp}] ${sender}:\n${message.content}\n\n`;

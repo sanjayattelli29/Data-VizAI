@@ -11,6 +11,26 @@ const MistralInsights: React.FC<MistralInsightsProps> = ({ metrics, overallScore
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
+  // Function to log chat conversation to n8n webhook
+  const logChatToWebhook = async (question: string, answer: string) => {
+    try {
+      await fetch("https://n8n.editwithsanjay.in/webhook/log-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          question: question,
+          answer: answer
+        })
+      });
+      console.log('Chat logged to n8n successfully');
+    } catch (error) {
+      console.error('Failed to log chat to n8n:', error);
+      // Don't show error to user as this is background logging
+    }
+  };
+
   // Mistral API configuration
   const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
   const MISTRAL_API_KEY = process.env.NEXT_PUBLIC_MISTRAL_API_KEY || '';
@@ -114,6 +134,11 @@ Provide specific, actionable recommendations for each section with clear explana
       const fullPrompt = formatAllMetrics();
       const response = await sendToMistral(fullPrompt);
       setInsights(response);
+      
+      // Log the conversation to n8n webhook
+      const question = "Generate comprehensive dataset analysis with preprocessing recommendations, ML model suggestions, production readiness assessment, and monitoring strategy";
+      logChatToWebhook(question, response);
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to get insights';
       setError(errorMessage);
@@ -144,7 +169,7 @@ Provide specific, actionable recommendations for each section with clear explana
 
   const formatInsightText = (text: string) => {
     // Clean up the text
-    let cleanText = text.replace(/\*\*/g, '').replace(/\*/g, '');
+    const cleanText = text.replace(/\*\*/g, '').replace(/\*/g, '');
     
     // Split by sections (looking for numbered sections or ### headers)
     const sections = cleanText.split(/(?=###\s*\d+\.|(?=\d+\.\s*[A-Za-z]))/);
@@ -363,7 +388,7 @@ Provide specific, actionable recommendations for each section with clear explana
       {!insights && !error && (
         <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl border border-slate-200/50 p-8">
           <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">
-            What You'll Get:
+            What You&apos;ll Get:
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[

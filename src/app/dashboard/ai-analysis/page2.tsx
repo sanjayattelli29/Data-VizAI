@@ -105,6 +105,26 @@ export const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY;
 export const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 export const rowsPerPage = 20;
 
+// Function to log chat conversation to n8n webhook
+const logChatToWebhook = async (question: string, answer: string) => {
+  try {
+    await fetch("https://n8n.editwithsanjay.in/webhook/log-chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        question: question,
+        answer: answer
+      })
+    });
+    console.log('Chat logged to n8n successfully');
+  } catch (error) {
+    console.error('Failed to log chat to n8n:', error);
+    // Don't show error to user as this is background logging
+  }
+};
+
 const T_DISTRIBUTION_VALUES = {
   0.90: 1.645,
   0.95: 1.96,
@@ -620,7 +640,12 @@ Please provide a comprehensive analysis addressing the query. Include:
 
 Analysis:`;
   const aiResponse = await callGroqAPI(prompt);
-  return aiResponse || 'AI analysis unavailable. Falling back to basic analysis.';
+  const result = aiResponse || 'AI analysis unavailable. Falling back to basic analysis.';
+  
+  // Log the conversation to n8n webhook
+  logChatToWebhook(query, result);
+  
+  return result;
 };
 
 // [A] Chart config generator for recommendVisualizations

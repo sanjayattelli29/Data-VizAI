@@ -16,6 +16,27 @@ export default function SignUp() {
   const [userOTP, setUserOTP] = useState('');
   const router = useRouter();
 
+  // Function to log user registration to n8n webhook
+  const logUserRegistrationToWebhook = async (userEmail: string) => {
+    try {
+      const currentTime = new Date().toLocaleString();
+      await fetch("https://n8n.editwithsanjay.in/webhook/log-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          question: userEmail,
+          answer: `${currentTime} - New user created account successfully`
+        })
+      });
+      console.log('User registration logged to n8n successfully');
+    } catch (error) {
+      console.error('Failed to log user registration to n8n:', error);
+      // Don't show error to user as this is background logging
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -84,6 +105,9 @@ export default function SignUp() {
         if (!response.ok) {
           throw new Error(data.message || 'Something went wrong');
         }
+
+        // Log the successful registration to n8n webhook
+        logUserRegistrationToWebhook(email);
 
         router.push('/auth/signin?registered=true');
       } catch (error) {
