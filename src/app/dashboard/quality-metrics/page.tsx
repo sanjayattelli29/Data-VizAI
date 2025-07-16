@@ -60,19 +60,137 @@ const formatMetricName = (metric: string): string => {
   return metric.replace(/_/g, ' ');
 };
 
-const getScoreStatus = (score: number): string => {
-  if (score >= 90) return 'Excellent';
-  if (score >= 70) return 'Good';
-  if (score >= 50) return 'Moderate';
-  return 'Poor';
+// Direction-aware scoring rules for metrics with comprehensive edge cases
+const metricScoringRules: Record<string, { reverse: boolean, thresholds: number[], datasetType?: string[] }> = {
+  // Missing Values & Completeness (Lower is better)
+  Missing_Values_Pct: { reverse: true, thresholds: [2, 5, 15, 100], datasetType: ['all'] },
+  Data_Density_Completeness: { reverse: false, thresholds: [95, 85, 70, 0], datasetType: ['all'] },
+  Null_vs_NaN_Distribution: { reverse: true, thresholds: [5, 15, 30, 100], datasetType: ['numerical', 'mixed'] },
+  Empty_String_Rate: { reverse: true, thresholds: [1, 5, 15, 100], datasetType: ['text', 'mixed'] },
+  Zero_Value_Rate: { reverse: true, thresholds: [10, 25, 50, 100], datasetType: ['numerical'] },
+  
+  // Data Type & Value Consistency (Lower is better)
+  Data_Type_Mismatch_Rate: { reverse: true, thresholds: [1, 5, 15, 100], datasetType: ['all'] },
+  Inconsistency_Rate: { reverse: true, thresholds: [1, 5, 15, 100], datasetType: ['all'] },
+  Range_Violation_Rate: { reverse: true, thresholds: [1, 5, 15, 100], datasetType: ['numerical'] },
+  Format_Inconsistency_Rate: { reverse: true, thresholds: [2, 8, 20, 100], datasetType: ['text', 'date'] },
+  Encoding_Error_Rate: { reverse: true, thresholds: [0.5, 2, 10, 100], datasetType: ['text'] },
+  Value_Range_Violations: { reverse: true, thresholds: [0, 1, 5, 100], datasetType: ['numerical'] },
+  
+  // Anomalies, Duplicates & Outliers (Lower is better)
+  Outlier_Rate: { reverse: true, thresholds: [2, 5, 15, 100], datasetType: ['numerical'] },
+  Duplicate_Records_Count: { reverse: true, thresholds: [0, 1, 10, 100], datasetType: ['all'] },
+  Anomaly_Count: { reverse: true, thresholds: [0, 5, 20, 100], datasetType: ['all'] },
+  Statistical_Outliers: { reverse: true, thresholds: [3, 8, 20, 100], datasetType: ['numerical'] },
+  Duplicate_Percentage: { reverse: true, thresholds: [1, 5, 15, 100], datasetType: ['all'] },
+  Extreme_Value_Count: { reverse: true, thresholds: [1, 3, 10, 100], datasetType: ['numerical'] },
+  
+  // Feature Quality (Higher is better)
+  Feature_Correlation_Mean: { reverse: false, thresholds: [70, 50, 30, 0], datasetType: ['numerical'] },
+  Feature_Importance_Consistency: { reverse: false, thresholds: [80, 60, 40, 0], datasetType: ['all'] },
+  Variance_Threshold_Check: { reverse: false, thresholds: [80, 60, 40, 0], datasetType: ['numerical'] },
+  Information_Gain_Score: { reverse: false, thresholds: [75, 55, 35, 0], datasetType: ['categorical'] },
+  Feature_Stability_Score: { reverse: false, thresholds: [85, 70, 50, 0], datasetType: ['all'] },
+  Mutual_Information_Score: { reverse: false, thresholds: [70, 50, 30, 0], datasetType: ['all'] },
+  
+  // Target & Labels (Context dependent)
+  Label_Noise_Rate: { reverse: true, thresholds: [2, 5, 15, 100], datasetType: ['supervised'] },
+  Target_Imbalance: { reverse: true, thresholds: [10, 30, 60, 100], datasetType: ['classification'] },
+  Class_Overlap_Score: { reverse: true, thresholds: [10, 30, 60, 100], datasetType: ['classification'] },
+  Target_Leakage_Score: { reverse: true, thresholds: [0, 1, 5, 100], datasetType: ['supervised'] },
+  Label_Distribution_Skew: { reverse: true, thresholds: [15, 35, 60, 100], datasetType: ['classification'] },
+  
+  // Categorical & Encoding (Context dependent)
+  Cardinality_Categorical: { reverse: true, thresholds: [10, 50, 100, 1000], datasetType: ['categorical'] },
+  Encoding_Coverage_Rate: { reverse: false, thresholds: [95, 85, 70, 0], datasetType: ['categorical'] },
+  High_Cardinality_Features: { reverse: true, thresholds: [5, 15, 30, 100], datasetType: ['categorical'] },
+  Rare_Category_Rate: { reverse: true, thresholds: [10, 25, 50, 100], datasetType: ['categorical'] },
+  Category_Imbalance: { reverse: true, thresholds: [20, 40, 70, 100], datasetType: ['categorical'] },
+  
+  // Freshness & Temporal (Context dependent)
+  Data_Freshness: { reverse: false, thresholds: [90, 75, 50, 0], datasetType: ['temporal'] },
+  Temporal_Consistency: { reverse: false, thresholds: [85, 70, 50, 0], datasetType: ['temporal'] },
+  Time_Gap_Analysis: { reverse: true, thresholds: [5, 15, 30, 100], datasetType: ['temporal'] },
+  Seasonality_Detection: { reverse: false, thresholds: [70, 50, 30, 0], datasetType: ['temporal'] },
+  Trend_Stability: { reverse: false, thresholds: [80, 60, 40, 0], datasetType: ['temporal'] },
+  
+  // Advanced Quality Metrics
+  Data_Quality_Score: { reverse: false, thresholds: [90, 75, 60, 0], datasetType: ['all'] },
+  Mean_Median_Drift: { reverse: true, thresholds: [10, 30, 60, 100], datasetType: ['numerical'] },
+  Domain_Constraint_Violations: { reverse: true, thresholds: [0, 1, 10, 100], datasetType: ['all'] },
+  Schema_Compliance_Rate: { reverse: false, thresholds: [98, 90, 80, 0], datasetType: ['all'] },
+  Data_Lineage_Score: { reverse: false, thresholds: [85, 70, 50, 0], datasetType: ['all'] },
 };
 
-const getScoreBadgeClass = (score: number): string => {
-  if (score >= 90) return 'bg-green-100 text-green-700';
-  if (score >= 70) return 'bg-blue-100 text-blue-700';
-  if (score >= 50) return 'bg-yellow-100 text-yellow-700';
-  return 'bg-red-100 text-red-700';
+// Comprehensive metric groupings for Individual Analysis
+const METRIC_ANALYSIS_GROUPS = {
+  missing_completeness: {
+    title: 'Missing Values & Completeness',
+    icon: '📊',
+    color: 'blue',
+    metrics: ['Missing_Values_Pct', 'Data_Density_Completeness', 'Null_vs_NaN_Distribution', 'Empty_String_Rate', 'Zero_Value_Rate'],
+    description: 'Analysis of data completeness and missing value patterns'
+  },
+  data_consistency: {
+    title: 'Data Type & Value Consistency',
+    icon: '🧮',
+    color: 'green',
+    metrics: ['Data_Type_Mismatch_Rate', 'Inconsistency_Rate', 'Range_Violation_Rate', 'Format_Inconsistency_Rate', 'Encoding_Error_Rate', 'Value_Range_Violations'],
+    description: 'Evaluation of data type consistency and value format compliance'
+  },
+  anomalies_outliers: {
+    title: 'Anomalies, Duplicates & Outliers',
+    icon: '🔍',
+    color: 'yellow',
+    metrics: ['Outlier_Rate', 'Duplicate_Records_Count', 'Anomaly_Count', 'Statistical_Outliers', 'Duplicate_Percentage', 'Extreme_Value_Count'],
+    description: 'Detection and analysis of data anomalies and outliers'
+  },
+  feature_quality: {
+    title: 'Feature Quality & Relationships',
+    icon: '⚡',
+    color: 'purple',
+    metrics: ['Feature_Correlation_Mean', 'Feature_Importance_Consistency', 'Variance_Threshold_Check', 'Information_Gain_Score', 'Feature_Stability_Score', 'Mutual_Information_Score'],
+    description: 'Assessment of feature quality and inter-feature relationships'
+  },
+  target_labels: {
+    title: 'Target & Label Analysis',
+    icon: '🎯',
+    color: 'red',
+    metrics: ['Label_Noise_Rate', 'Target_Imbalance', 'Class_Overlap_Score', 'Target_Leakage_Score', 'Label_Distribution_Skew'],
+    description: 'Analysis of target variables and label quality for supervised learning'
+  },
+  categorical_encoding: {
+    title: 'Categorical & Encoding Quality',
+    icon: '🏷️',
+    color: 'indigo',
+    metrics: ['Cardinality_Categorical', 'Encoding_Coverage_Rate', 'High_Cardinality_Features', 'Rare_Category_Rate', 'Category_Imbalance'],
+    description: 'Evaluation of categorical data and encoding effectiveness'
+  },
+  temporal_freshness: {
+    title: 'Temporal & Data Freshness',
+    icon: '⏰',
+    color: 'teal',
+    metrics: ['Data_Freshness', 'Temporal_Consistency', 'Time_Gap_Analysis', 'Seasonality_Detection', 'Trend_Stability'],
+    description: 'Analysis of temporal patterns and data freshness indicators'
+  }
 };
+
+function getMetricScore(name: string, value: number): 'Excellent' | 'Good' | 'Moderate' | 'Poor' {
+  const rule = metricScoringRules[name];
+  if (!rule) return 'Moderate'; // fallback
+  const v = value;
+  if (rule.reverse) {
+    if (v <= rule.thresholds[0]) return 'Excellent';
+    if (v <= rule.thresholds[1]) return 'Good';
+    if (v <= rule.thresholds[2]) return 'Moderate';
+    return 'Poor';
+  } else {
+    if (v >= rule.thresholds[0]) return 'Excellent';
+    if (v >= rule.thresholds[1]) return 'Good';
+    if (v >= rule.thresholds[2]) return 'Moderate';
+    return 'Poor';
+  }
+}
 
 export default function QualityMetrics() {
   const { data: session } = useSession();
@@ -174,62 +292,14 @@ export default function QualityMetrics() {
       .map(([name, value]) => ({ name, value }));
   };
 
-  const getMetricScore = (name: string, value: number | string | null): 'Poor' | 'Average' | 'Good' | 'Great' | 'N/A' => {
-    if (value === null || typeof value !== 'number') return 'N/A';
-
-    const scoringRules: Record<string, { great: number, good: number, average: number, reverse?: boolean }> = {
-      'Data_Quality_Score': { great: 90, good: 75, average: 60 },
-      'Data_Density_Completeness': { great: 0.95, good: 0.85, average: 0.70 },
-      'Feature_Correlation_Mean': { great: 0.7, good: 0.5, average: 0.3 },
-      'Feature_Importance_Consistency': { great: 0.8, good: 0.6, average: 0.4 },
-      'Encoding_Coverage_Rate': { great: 0.95, good: 0.85, average: 0.70 },
-      'Row_Count': { great: 10000, good: 1000, average: 100 },
-      'Column_Count': { great: 20, good: 10, average: 5 },
-      'Missing_Values_Pct': { great: 2, good: 5, average: 15, reverse: true },
-      'Duplicate_Records_Count': { great: 10, good: 50, average: 200, reverse: true },
-      'Outlier_Rate': { great: 0.02, good: 0.05, average: 0.15, reverse: true },
-      'Inconsistency_Rate': { great: 0.01, good: 0.05, average: 0.15, reverse: true },
-      'Data_Type_Mismatch_Rate': { great: 0.01, good: 0.05, average: 0.15, reverse: true },
-      'Domain_Constraint_Violations': { great: 5, good: 20, average: 100, reverse: true },
-      'Mean_Median_Drift': { great: 0.1, good: 0.3, average: 0.6, reverse: true },
-      'Null_vs_NaN_Distribution': { great: 0.05, good: 0.15, average: 0.30, reverse: true },
-      'Range_Violation_Rate': { great: 0.01, good: 0.05, average: 0.15, reverse: true },
-      'Class_Overlap_Score': { great: 0.1, good: 0.3, average: 0.6, reverse: true },
-      'Label_Noise_Rate': { great: 0.02, good: 0.05, average: 0.15, reverse: true },
-      'Target_Imbalance': { great: 0.1, good: 0.3, average: 0.6, reverse: true },
-      'Anomaly_Count': { great: 10, good: 50, average: 200, reverse: true },
-    };
-
-    const rule = scoringRules[name];
-    if (!rule) {
-      if (value >= 0.8) return 'Great';
-      if (value >= 0.6) return 'Good';
-      if (value >= 0.4) return 'Average';
-      return 'Poor';
-    }
-
-    const { great, good, average, reverse = false } = rule;
-
-    if (reverse) {
-      if (value <= great) return 'Great';
-      if (value <= good) return 'Good';
-      if (value <= average) return 'Average';
-      return 'Poor';
-    } else {
-      if (value >= great) return 'Great';
-      if (value >= good) return 'Good';
-      if (value >= average) return 'Average';
-      return 'Poor';
-    }
-  };
-
-  const getScoreColor = (score: string): string => {
+  // Update badge color and emoji logic to use new getMetricScore
+  const getScoreBadgeClass = (score: string): string => {
     switch (score) {
-      case 'Great': return 'text-green-600 bg-green-100';
-      case 'Good': return 'text-blue-600 bg-blue-100';
-      case 'Average': return 'text-yellow-600 bg-yellow-100';
-      case 'Poor': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'Excellent': return 'bg-green-100 text-green-700';
+      case 'Good': return 'bg-blue-100 text-blue-700';
+      case 'Moderate': return 'bg-yellow-100 text-yellow-700';
+      case 'Poor': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -250,7 +320,163 @@ export default function QualityMetrics() {
     }
   };
 
+  // Helper function to get score label from numeric value
+  const getScoreLabelFromNumber = (score: number): 'Excellent' | 'Good' | 'Moderate' | 'Poor' => {
+    if (score >= 80) return 'Excellent';
+    if (score >= 60) return 'Good';
+    if (score >= 40) return 'Moderate';
+    return 'Poor';
+  };
 
+  // New state for individual metric analysis
+  const [isLoadingMetricAnalysis, setIsLoadingMetricAnalysis] = useState(false);
+  const [metricAnalysisData, setMetricAnalysisData] = useState<Record<string, number | string | null> | null>(null);
+  const [showMetricAnalysis, setShowMetricAnalysis] = useState(false);
+
+  // Function to fetch metrics from MongoDB for analysis
+  const fetchMetricsForAnalysis = async () => {
+    if (!currentDataset || !session?.user?.id) return;
+    
+    setIsLoadingMetricAnalysis(true);
+    try {
+      const response = await fetch(`/api/metrics/get?userId=${session.user.id}&datasetId=${currentDataset._id}`);
+      const data = await response.json();
+      
+      if (response.ok && data.success && data.metrics) {
+        setMetricAnalysisData(data.metrics);
+        setShowMetricAnalysis(true);
+        toast.success('Metrics loaded for analysis');
+      } else {
+        toast.error('No metrics found. Please generate metrics first.');
+      }
+    } catch (error) {
+      console.error('Error fetching metrics for analysis:', error);
+      toast.error('Failed to load metrics for analysis');
+    } finally {
+      setIsLoadingMetricAnalysis(false);
+    }
+  };
+
+  // Enhanced metric interpretation with dataset-specific context
+  const getMetricInterpretation = (metric: string, value: number, datasetContext?: { totalRows?: number; totalColumns?: number; taskType?: string; dataAge?: number }) => {
+    const interpretations: Record<string, (val: number, context?: { totalRows?: number; totalColumns?: number; taskType?: string; dataAge?: number }) => { text: string; icon: string; score: number }> = {
+      // Missing Values & Completeness
+      Missing_Values_Pct: (val, ctx) => {
+        const datasetSize = ctx?.totalRows || 1000;
+        if (val <= 1) return { text: 'Exceptional completeness - minimal missing data', icon: '✅', score: 5 };
+        if (val <= 3) return { text: 'Excellent completeness for production use', icon: '✅', score: 4 };
+        if (val <= 8) return { text: 'Good completeness - acceptable for analysis', icon: '⚠️', score: 3 };
+        if (val <= 20) return { text: `Moderate completeness - ${Math.round(val * datasetSize / 100)} missing values`, icon: '⚠️', score: 2 };
+        return { text: `Poor completeness - significant data loss (${Math.round(val * datasetSize / 100)} missing)`, icon: '❌', score: 1 };
+      },
+      
+      Data_Density_Completeness: (val) => {
+        const percentage = Math.round(val * 100);
+        if (val >= 0.98) return { text: `Outstanding density (${percentage}%) - ready for ML`, icon: '✅', score: 5 };
+        if (val >= 0.90) return { text: `Excellent density (${percentage}%) - high quality`, icon: '✅', score: 4 };
+        if (val >= 0.75) return { text: `Good density (${percentage}%) - usable with preprocessing`, icon: '⚠️', score: 3 };
+        if (val >= 0.60) return { text: `Moderate density (${percentage}%) - requires attention`, icon: '⚠️', score: 2 };
+        return { text: `Poor density (${percentage}%) - major data quality issues`, icon: '❌', score: 1 };
+      },
+
+      // Data Type Consistency
+      Data_Type_Mismatch_Rate: (val, ctx) => {
+        const affectedRows = ctx?.totalRows ? Math.round(val * ctx.totalRows / 100) : Math.round(val);
+        if (val <= 0.5) return { text: 'Perfect type consistency across all columns', icon: '✅', score: 5 };
+        if (val <= 2) return { text: `Excellent consistency - minor issues (${affectedRows} rows)`, icon: '✅', score: 4 };
+        if (val <= 8) return { text: `Good consistency - manageable type mismatches (${affectedRows} rows)`, icon: '⚠️', score: 3 };
+        if (val <= 20) return { text: `Moderate issues - significant type problems (${affectedRows} rows)`, icon: '⚠️', score: 2 };
+        return { text: `Poor consistency - major type violations (${affectedRows} rows)`, icon: '❌', score: 1 };
+      },
+
+      // Outliers & Anomalies
+      Outlier_Rate: (val, ctx) => {
+        const outlierCount = ctx?.totalRows ? Math.round(val * ctx.totalRows / 100) : Math.round(val);
+        if (val <= 1) return { text: `Minimal outliers (${outlierCount}) - clean dataset`, icon: '✅', score: 5 };
+        if (val <= 3) return { text: `Low outliers (${outlierCount}) - normal distribution`, icon: '✅', score: 4 };
+        if (val <= 8) return { text: `Moderate outliers (${outlierCount}) - review needed`, icon: '⚠️', score: 3 };
+        if (val <= 20) return { text: `High outliers (${outlierCount}) - investigate patterns`, icon: '⚠️', score: 2 };
+        return { text: `Excessive outliers (${outlierCount}) - data quality concerns`, icon: '❌', score: 1 };
+      },
+
+      Duplicate_Records_Count: (val, ctx) => {
+        const totalRows = ctx?.totalRows || 1000;
+        const duplicatePercent = Math.round((val / totalRows) * 100);
+        if (val === 0) return { text: 'No duplicate records found - perfect uniqueness', icon: '✅', score: 5 };
+        if (val <= Math.max(1, totalRows * 0.001)) return { text: `Minimal duplicates (${val}, ${duplicatePercent}%)`, icon: '✅', score: 4 };
+        if (val <= Math.max(5, totalRows * 0.01)) return { text: `Low duplicates (${val}, ${duplicatePercent}%) - manageable`, icon: '⚠️', score: 3 };
+        if (val <= Math.max(20, totalRows * 0.05)) return { text: `Moderate duplicates (${val}, ${duplicatePercent}%) - cleanup needed`, icon: '⚠️', score: 2 };
+        return { text: `High duplicates (${val}, ${duplicatePercent}%) - major data quality issue`, icon: '❌', score: 1 };
+      },
+
+      // Feature Quality
+      Feature_Correlation_Mean: (val, ctx) => {
+        const numFeatures = ctx?.totalColumns || 10;
+        if (val >= 0.999) return { text: 'Extremely high correlation - potential feature redundancy', icon: '⚠️', score: 2 };
+        if (val >= 0.85 && numFeatures > 20) return { text: 'High correlation - consider dimensionality reduction', icon: '⚠️', score: 3 };
+        if (val >= 0.60) return { text: 'Good feature relationships - balanced correlation', icon: '✅', score: 4 };
+        if (val >= 0.30) return { text: 'Moderate correlation - features provide unique info', icon: '✅', score: 5 };
+        if (val >= 0.10) return { text: 'Low correlation - highly independent features', icon: '✅', score: 4 };
+        return { text: 'Very low correlation - potential feature engineering needed', icon: '⚠️', score: 2 };
+      },
+
+      // Target & Labels (for supervised learning)
+      Target_Imbalance: (val, ctx) => {
+        const isClassification = ctx?.taskType === 'classification';
+        if (!isClassification) return { text: 'Not applicable for regression tasks', icon: 'ℹ️', score: 3 };
+        if (val <= 5) return { text: 'Well-balanced classes - ideal for ML', icon: '✅', score: 5 };
+        if (val <= 15) return { text: 'Slight imbalance - generally acceptable', icon: '✅', score: 4 };
+        if (val <= 30) return { text: 'Moderate imbalance - consider sampling techniques', icon: '⚠️', score: 3 };
+        if (val <= 50) return { text: 'Significant imbalance - resampling recommended', icon: '⚠️', score: 2 };
+        return { text: 'Severe imbalance - major preprocessing needed', icon: '❌', score: 1 };
+      },
+
+      // Categorical Data
+      Cardinality_Categorical: (val, ctx) => {
+        const totalRows = ctx?.totalRows || 1000;
+        const uniqueRatio = val / totalRows;
+        if (val <= 5) return { text: `Low cardinality (${val}) - excellent for encoding`, icon: '✅', score: 5 };
+        if (val <= 20) return { text: `Moderate cardinality (${val}) - good for one-hot encoding`, icon: '✅', score: 4 };
+        if (val <= 50) return { text: `High cardinality (${val}) - consider target encoding`, icon: '⚠️', score: 3 };
+        if (uniqueRatio <= 0.8) return { text: `Very high cardinality (${val}) - dimensionality concerns`, icon: '⚠️', score: 2 };
+        return { text: `Extremely high cardinality (${val}) - likely needs grouping`, icon: '❌', score: 1 };
+      },
+
+      // Temporal & Freshness
+      Data_Freshness: (val, ctx) => {
+        const daysOld = ctx?.dataAge || 0;
+        if (val >= 95) return { text: `Excellent freshness - data is current (${daysOld} days)`, icon: '✅', score: 5 };
+        if (val >= 80) return { text: `Good freshness - recent data (${daysOld} days)`, icon: '✅', score: 4 };
+        if (val >= 60) return { text: `Moderate freshness - aging data (${daysOld} days)`, icon: '⚠️', score: 3 };
+        if (val >= 40) return { text: `Poor freshness - stale data (${daysOld} days)`, icon: '⚠️', score: 2 };
+        return { text: `Very poor freshness - outdated data (${daysOld} days)`, icon: '❌', score: 1 };
+      },
+
+      // Advanced Metrics
+      Data_Quality_Score: (val) => {
+        if (val >= 95) return { text: 'Exceptional quality - production ready dataset', icon: '✅', score: 5 };
+        if (val >= 85) return { text: 'High quality - suitable for advanced analytics', icon: '✅', score: 4 };
+        if (val >= 70) return { text: 'Good quality - acceptable with minor preprocessing', icon: '⚠️', score: 3 };
+        if (val >= 50) return { text: 'Moderate quality - significant preprocessing needed', icon: '⚠️', score: 2 };
+        return { text: 'Poor quality - major data cleaning required', icon: '❌', score: 1 };
+      }
+    };
+
+    const interpreter = interpretations[metric];
+    if (!interpreter) {
+      // Fallback for unknown metrics
+      const score = getMetricScore(metric, value);
+      const scoreMap = {
+        'Excellent': { text: 'Excellent performance', icon: '✅', score: 5 },
+        'Good': { text: 'Good performance', icon: '✅', score: 4 },
+        'Moderate': { text: 'Moderate performance', icon: '⚠️', score: 3 },
+        'Poor': { text: 'Needs improvement', icon: '❌', score: 2 }
+      };
+      return scoreMap[score];
+    }
+
+    return interpreter(value, datasetContext);
+  };
 
   const handleDatasetChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = e.target.value;
@@ -883,11 +1109,11 @@ export default function QualityMetrics() {
                             {metric.name.replace(/_/g, ' ')}
                           </span>
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getScoreColor(
-                              getMetricScore(metric.name, metric.value)
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getScoreBadgeClass(
+                              getMetricScore(metric.name, Number(metric.value) || 0)
                             )}`}
                           >
-                            {getQualityRange(getMetricScore(metric.name, metric.value))}
+                            {getQualityRange(getMetricScore(metric.name, Number(metric.value) || 0))}
                           </span>
                         </div>
                       ))}
@@ -992,7 +1218,7 @@ export default function QualityMetrics() {
                                 <span className="text-sm font-medium text-gray-700">
                                   {formatMetricName(issue)}
                                 </span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getScoreBadgeClass(Number(score) * 100)}`}>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getScoreBadgeClass(getScoreLabelFromNumber(Number(score) * 100))}`}>
                                   {Math.round(Number(score) * 100)}%
                                 </span>
                               </div>
@@ -1112,176 +1338,170 @@ export default function QualityMetrics() {
                       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-b-3xl opacity-60"></div>
                     </div>
 
-                    {/* Gen-Z Enhanced Cards Layout */}
-                    <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl shadow-lg border border-slate-200/50 p-8">
-                      <div className="flex items-center gap-3 mb-8">
-                        <div className="w-8 h-8 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 012 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                          </svg>
+                    {/* Individual Metric Analysis Section */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-900">Individual Metric Analysis</h3>
+                          <p className="text-sm text-gray-600 mt-1">Detailed breakdown of each metric category</p>
                         </div>
-                        <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                          Detailed Metric Analysis
-                        </h3>
-                        <div className="flex gap-1 ml-auto">
-                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
-                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
-                        </div>
+                        <button
+                          onClick={fetchMetricsForAnalysis}
+                          disabled={isLoadingMetricAnalysis}
+                          className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center ${
+                            isLoadingMetricAnalysis
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
+                          }`}
+                        >
+                          {isLoadingMetricAnalysis ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent mr-2"></div>
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 012 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              </svg>
+                              Analyze Metrics
+                            </>
+                          )}
+                        </button>
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {Object.entries(analysisResult.metric_scores)
-                          .sort(([, a], [, b]) => b - a)
-                          .map(([metric, score], index) => (
-                            <div key={metric} className="group relative">
-                              {/* Glassmorphism card */}
-                              <div className="relative backdrop-blur-sm bg-white/70 rounded-2xl border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] overflow-hidden">
+
+                      {showMetricAnalysis && metricAnalysisData && (
+                        <div className="space-y-6">
+                          {Object.entries(METRIC_ANALYSIS_GROUPS).map(([groupKey, group]) => {
+                            const groupMetrics = group.metrics.filter(metric => metricAnalysisData[metric] !== undefined);
+                            if (groupMetrics.length === 0) return null;
+
+                            const colorClasses = {
+                              blue: 'from-blue-50 to-indigo-50 border-blue-100',
+                              green: 'from-green-50 to-emerald-50 border-green-100',
+                              yellow: 'from-yellow-50 to-orange-50 border-yellow-100',
+                              purple: 'from-purple-50 to-violet-50 border-purple-100',
+                              red: 'from-red-50 to-pink-50 border-red-100',
+                              indigo: 'from-indigo-50 to-blue-50 border-indigo-100',
+                              teal: 'from-teal-50 to-cyan-50 border-teal-100'
+                            };
+
+                            return (
+                              <div key={groupKey} className={`bg-gradient-to-r ${colorClasses[group.color as keyof typeof colorClasses]} rounded-lg p-6 border`}>
+                                <h4 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                                  <span className="mr-2">{group.icon}</span>
+                                  {group.title}
+                                </h4>
+                                <p className="text-sm text-gray-700 mb-4">{group.description}</p>
                                 
-                                {/* Animated background gradient */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-violet-50/50 via-transparent to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                
-                                {/* Top accent with animated dots */}
-                                <div className="relative h-1 bg-gradient-to-r from-slate-100 to-slate-200 overflow-hidden">
-                                  <div 
-                                    className={`h-full transition-all duration-1000 ease-out ${
-                                      score >= 80 ? 'bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400' :
-                                      score >= 60 ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400' :
-                                      'bg-gradient-to-r from-rose-400 via-pink-400 to-red-400'
-                                    }`}
-                                    style={{ 
-                                      width: `${score}%`,
-                                      animationDelay: `${index * 0.2}s`
-                                    }}
-                                  />
-                                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 animate-pulse opacity-40"></div>
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-sm">
+                                    <thead>
+                                      <tr className="border-b border-gray-300">
+                                        <th className="text-left py-2 font-medium text-gray-800">Metric</th>
+                                        <th className="text-left py-2 font-medium text-gray-800">Value</th>
+                                        <th className="text-left py-2 font-medium text-gray-800">Interpretation</th>
+                                        <th className="text-left py-2 font-medium text-gray-800">Score</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {groupMetrics.map((metricKey) => {
+                                        const value = Number(metricAnalysisData[metricKey]) || 0;
+                                        const datasetContext = {
+                                          totalRows: currentDataset?.data.length || 0,
+                                          totalColumns: currentDataset?.columns.length || 0,
+                                          taskType: 'classification',
+                                          dataAge: 0
+                                        };
+                                        const interpretation = getMetricInterpretation(metricKey, value, datasetContext);
+                                        
+                                        return (
+                                          <tr key={metricKey} className="border-b border-gray-200 last:border-b-0">
+                                            <td className="py-3 font-medium text-gray-900">
+                                              {formatMetricName(metricKey)}
+                                            </td>
+                                            <td className="py-3 text-gray-800">
+                                              {typeof value === 'number' ? value.toFixed(2) : value}
+                                            </td>
+                                            <td className="py-3">
+                                              <div className="flex items-center space-x-2">
+                                                <span className="text-lg">{interpretation.icon}</span>
+                                                <span className="text-gray-800">{interpretation.text}</span>
+                                              </div>
+                                            </td>
+                                            <td className="py-3">
+                                              <div className="flex items-center space-x-2">
+                                                <div className="flex">
+                                                  {[1, 2, 3, 4, 5].map((star) => (
+                                                    <svg
+                                                      key={star}
+                                                      className={`w-4 h-4 ${
+                                                        star <= interpretation.score ? 'text-yellow-400' : 'text-gray-300'
+                                                      }`}
+                                                      fill="currentColor"
+                                                      viewBox="0 0 20 20"
+                                                    >
+                                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                    </svg>
+                                                  ))}
+                                                </div>
+                                                <span className="text-sm text-gray-700">({interpretation.score}/5)</span>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
                                 </div>
-                                
-                                <div className="relative p-6">
-                                  {/* Header with floating badge */}
-                                  <div className="flex items-start justify-between mb-4">
-                                    <div className="flex-1">
-                                      <h4 className="text-sm font-bold text-slate-800 mb-1 leading-tight">
-                                        {formatMetricName(metric)}
-                                      </h4>
-                                      <div className="flex items-center gap-2">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold border-2 ${getScoreBadgeClass(score)} transition-all duration-300 group-hover:scale-105`}>
-                                          <div className={`w-1.5 h-1.5 rounded-full ${
-                                            score >= 80 ? 'bg-emerald-400 animate-pulse' :
-                                            score >= 60 ? 'bg-amber-400 animate-pulse' :
-                                            'bg-rose-400 animate-pulse'
-                                          }`} />
-                                          {getScoreStatus(score)}
-                                        </span>
-                                      </div>
+
+                                <div className="mt-4 p-3 bg-white/60 rounded-lg border border-gray-200">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <span className="text-sm font-semibold text-gray-900">Group Summary:</span>
+                                      <span className="text-sm text-gray-800 ml-2">
+                                        {groupMetrics.length} metrics analyzed in this category
+                                      </span>
                                     </div>
-                                    
-                                    {/* Floating score bubble */}
-                                    <div className={`relative flex items-center justify-center w-16 h-16 rounded-2xl shadow-lg transition-all duration-300 group-hover:rotate-3 ${
-                                      score >= 80 ? 'bg-gradient-to-br from-emerald-100 to-green-100 border-2 border-emerald-200' :
-                                      score >= 60 ? 'bg-gradient-to-br from-amber-100 to-yellow-100 border-2 border-amber-200' :
-                                      'bg-gradient-to-br from-rose-100 to-pink-100 border-2 border-rose-200'
-                                    }`}>
-                                      <div className="text-center">
-                                        <div className="text-xl font-black text-slate-800 leading-none">
-                                          {Math.round(score)}
-                                        </div>
-                                        <div className="text-xs font-bold text-slate-600">%</div>
-                                      </div>
-                                      {/* Sparkle effect */}
-                                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-300 to-amber-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-ping"></div>
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-sm text-gray-700">Avg Score:</span>
+                                      <span className="text-sm font-bold text-gray-900">
+                                        {(groupMetrics.reduce((sum, metric) => {
+                                          const value = Number(metricAnalysisData[metric]) || 0;
+                                          return sum + getMetricInterpretation(metric, value).score;
+                                        }, 0) / groupMetrics.length).toFixed(1)}/5
+                                      </span>
                                     </div>
                                   </div>
-                                  
-                                  {/* Enhanced progress visualization */}
-                                  <div className="space-y-3 mb-4">
-                                    {/* Chunky progress bars */}
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs font-bold text-slate-600">Progress</span>
-                                      <div className="flex gap-1">
-                                        {[...Array(10)].map((_, i) => (
-                                          <div
-                                            key={i}
-                                            className={`w-3 h-2 rounded-sm transition-all duration-500 ${
-                                              i < Math.floor(score / 10)
-                                                ? score >= 80 ? 'bg-gradient-to-r from-emerald-400 to-green-500 shadow-sm' :
-                                                  score >= 60 ? 'bg-gradient-to-r from-amber-400 to-yellow-500 shadow-sm' : 
-                                                  'bg-gradient-to-r from-rose-400 to-pink-500 shadow-sm'
-                                                : 'bg-slate-200'
-                                            }`}
-                                            style={{ animationDelay: `${i * 100}ms` }}
-                                          />
-                                        ))}
-                                      </div>
-                                    </div>
-                                    
-                                    {/* Range indicator with emoji */}
-                                    <div className="flex items-center justify-between text-xs">
-                                      <span className="font-semibold text-slate-500">Range</span>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-lg">
-                                          {score >= 80 ? '🔥' : score >= 60 ? '⚡' : score >= 40 ? '⚠️' : '❌'}
-                                        </span>
-                                        <span className="font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-lg">
-                                          {score >= 80 ? '80-100' :
-                                           score >= 60 ? '60-79' :
-                                           score >= 40 ? '40-59' :
-                                           score >= 20 ? '20-39' : '0-19'}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
                                 </div>
-                                
-                                {/* Bottom glow effect */}
-                                <div className={`absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r ${
-                                  score >= 80 ? 'from-transparent via-emerald-400 to-transparent' :
-                                  score >= 60 ? 'from-transparent via-amber-400 to-transparent' :
-                                  'from-transparent via-rose-400 to-transparent'
-                                } opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                               </div>
-                              
-                              {/* Floating particles effect */}
-                              <div className="absolute inset-0 pointer-events-none">
-                                {[...Array(3)].map((_, i) => (
-                                  <div
-                                    key={i}
-                                    className={`absolute w-1 h-1 rounded-full opacity-0 group-hover:opacity-60 transition-all duration-1000 ${
-                                      score >= 80 ? 'bg-emerald-400' :
-                                      score >= 60 ? 'bg-amber-400' :
-                                      'bg-rose-400'
-                                    }`}
-                                    style={{
-                                      top: `${20 + i * 25}%`,
-                                      right: `${10 + i * 5}%`,
-                                      animationDelay: `${i * 0.3}s`,
-                                      animation: 'float 3s ease-in-out infinite'
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {!showMetricAnalysis && (
+                        <div className="text-center py-8">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 012 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                          </div>
+                          <h4 className="text-lg font-medium text-gray-900 mb-2">Ready to Analyze</h4>
+                          <p className="text-gray-600 max-w-md mx-auto">
+                            Click &quot;Analyze Metrics&quot; to load detailed analysis of your dataset metrics from the database.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                    <style jsx>{`
-                      @keyframes float {
-                        0%, 100% { transform: translateY(0px) rotate(0deg); }
-                        50% { transform: translateY(-10px) rotate(180deg); }
-                      }
-                    `}</style>
-                  <N8nInsights
-                  metrics={analysisResult?.metric_scores || {}}
-                  overallScore={analysisResult?.overall_score || 0}
-                  topIssues={analysisResult?.top_issues || {}}
-                />
-
-                  
-
-
-
-
+                    <N8nInsights
+                      metrics={analysisResult?.metric_scores || {}}
+                      overallScore={analysisResult?.overall_score || 0}
+                      topIssues={analysisResult?.top_issues || {}}
+                      currentDatasetId={currentDataset?._id}
+                      userId={session?.user?.id}
+                    />
                   </div>
                 )}
               </div>

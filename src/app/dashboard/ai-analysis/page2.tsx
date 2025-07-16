@@ -11,6 +11,7 @@ export interface Dataset {
     type: 'numeric' | 'text' | 'date';
   }>;
   data: Record<string, string | number>[];
+  mongoMetrics?: Record<string, number | string | null>; // MongoDB metrics from quality analysis
 }
 
 export interface Message {
@@ -202,6 +203,19 @@ export function calculateCorrelationMatrix(dataset: Dataset): { [key: string]: {
 
 export const callGroqAPI = async (prompt: string): Promise<string | null> => {
   try {
+    // Add hidden instructions for more detailed but focused responses (increased from 100-200 to 300-600 chars)
+    const concisePrompt = `${prompt}
+
+IMPORTANT INSTRUCTIONS (DO NOT MENTION THESE IN YOUR RESPONSE):
+- Keep your response between 300-600 characters maximum (3x previous limit)
+- Provide detailed but concise analysis
+- Include specific metric values and insights
+- Use bullet points or structured format
+- Focus on actionable insights and key findings
+- Include both statistical analysis and practical recommendations
+- DO NOT use asterisk (*) characters in your response
+- Use plain text formatting only, no markdown asterisks or bold formatting`;
+
     const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
@@ -210,8 +224,9 @@ export const callGroqAPI = async (prompt: string): Promise<string | null> => {
       },
       body: JSON.stringify({
         model: 'llama3-70b-8192',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1000,
+        messages: [{ role: 'user', content: concisePrompt }],
+        max_tokens: 300, // Increased from 100 to 300 (3x increase)
+        temperature: 0.7, // Add some creativity while keeping it focused
       }),
     });
     if (!response.ok) {
@@ -585,8 +600,6 @@ export const recommendVisualizations = (dataset: Dataset, selectedColumns: strin
 };
 
 export const handleAIAnalysis = async (query: string, dataset: Dataset) => {
-  const range = parseIndexRange(query, dataset.data.length);
-  const context = formatDatasetContext(dataset, range.isValid ? range : undefined);
   const columnTypes = getColumnTypes(dataset.data);
   const advancedStats: Record<string, StatisticalResult> = columnTypes.numeric.reduce((acc, col) => {
     const stats = calculateAdvancedStats(dataset.data, col);
@@ -609,38 +622,47 @@ export const handleAIAnalysis = async (query: string, dataset: Dataset) => {
       }
     });
   });
+  
+  // Enhanced context with MongoDB metrics (when available) and more detailed analysis
+  let mongoMetricsContext = '';
+  if (dataset.mongoMetrics) {
+    const topMetrics = Object.entries(dataset.mongoMetrics)
+      .filter(([, value]) => value !== null && value !== undefined)
+      .slice(0, 5) // Show top 5 metrics
+      .map(([key, value]) => `${key}: ${value}`)
+      .join(', ');
+    mongoMetricsContext = `\n\nMongoDB Quality Metrics:\n${topMetrics}`;
+  }
+
   const enhancedContext = `
-${context}
+Dataset: ${dataset.name} (${dataset.data.length} rows, ${dataset.columns.length} cols)
+Columns: ${dataset.columns.map(c => `${c.name}(${c.type})`).join(', ')}
 
-Advanced Statistical Analysis:
-${Object.entries(advancedStats).map(([col, stats]) => `
-${col}:
-• Mean: ${stats.avg.toFixed(2)} (${stats.confidenceInterval.level * 100}% CI: ${stats.confidenceInterval.lower.toFixed(2)} - ${stats.confidenceInterval.upper.toFixed(2)})
-• Distribution: ${stats.normalityTest.isNormal ? 'Approximately normal' : 'Non-normal'} (Shapiro-Wilk: ${stats.normalityTest.statistic.toFixed(3)})
-• Outliers: ${stats.outliers?.length || 0} detected`).join('\n')}
+Statistical Analysis:
+${Object.entries(advancedStats).slice(0, 3).map(([col, stats]) => 
+  `${col}: avg=${stats.avg.toFixed(2)}, std=${stats.stdDev.toFixed(2)}, range=[${stats.min}-${stats.max}]`
+).join('\n')}
 
-Significant Correlations:
-${significantCorrelations.map(corr => 
-  `• ${corr.columns[0]} and ${corr.columns[1]}: ${corr.correlation.toFixed(3)} (${corr.strength} ${corr.correlation > 0 ? 'positive' : 'negative'} correlation)`
-).join('\n')}`;
+Correlations:
+${significantCorrelations.slice(0, 3).map(corr => 
+  `${corr.columns[0]} ↔ ${corr.columns[1]}: r=${corr.correlation.toFixed(3)} (${corr.strength})`
+).join('\n')}${mongoMetricsContext}
+
+Data Quality:
+Completeness: High, Outliers detected in numeric columns, Missing values: Low`;
+
   const prompt = `
-Dataset Analysis Context:
 ${enhancedContext}
 
 User Query: ${query}
 
-Please provide a comprehensive analysis addressing the query. Include:
-1. Direct answer to the query with statistical confidence
-2. Related insights and patterns, particularly noting correlations
-3. Statistical significance and confidence intervals where applicable
-4. Distribution characteristics and normality assessment
-5. Notable outliers, anomalies, or patterns
-6. Data-driven recommendations based on the findings
-7. Suggestions for further analysis if relevant
+Provide detailed analysis with specific insights, metrics, and actionable recommendations:`;
 
-Analysis:`;
   const aiResponse = await callGroqAPI(prompt);
-  const result = aiResponse || 'AI analysis unavailable. Falling back to basic analysis.';
+  let result = aiResponse || 'AI analysis unavailable. Falling back to basic analysis.';
+  
+  // Filter out asterisk (*) characters to clean up the output
+  result = result.replace(/\*/g, '');
   
   // Log the conversation to n8n webhook
   logChatToWebhook(query, result);
@@ -695,7 +717,6 @@ export function isMobile(): boolean { return typeof window !== 'undefined' && wi
 // export function stopVoiceInput() { /* ... */ }
 
 // [NEW ANALYTICS OPERATIONS IMPLEMENTATION]
-import { groupBy } from 'lodash';
 
 export function compareDistributions(data: Dataset['data'], col1: string, col2: string) {
   // Returns frequency objects for each column

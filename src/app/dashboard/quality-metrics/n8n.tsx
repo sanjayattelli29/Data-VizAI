@@ -4,12 +4,55 @@ interface MistralInsightsProps {
   metrics: Record<string, number>;
   overallScore: number;
   topIssues: Record<string, number>;
+  currentDatasetId?: string;
+  userId?: string;
 }
 
-const MistralInsights: React.FC<MistralInsightsProps> = ({ metrics, overallScore, topIssues }) => {
+const MistralInsights: React.FC<MistralInsightsProps> = ({ 
+  metrics, 
+  overallScore, 
+  topIssues, 
+  currentDatasetId, 
+  userId 
+}) => {
   const [insights, setInsights] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+
+  // Function to fetch metrics from MongoDB
+  const fetchMetricsFromMongoDB = async (): Promise<Record<string, number>> => {
+    if (!currentDatasetId || !userId) {
+      console.log('Using fallback metrics - no dataset/user ID provided');
+      return metrics;
+    }
+
+    try {
+      const response = await fetch(`/api/metrics/get?userId=${userId}&datasetId=${currentDatasetId}`);
+      const data = await response.json();
+      
+      if (response.ok && data.success && data.metrics) {
+        console.log('Successfully fetched metrics from MongoDB:', data.metrics);
+        
+        // Convert string values to numbers for metrics that should be numeric
+        const numericMetrics: Record<string, number> = {};
+        Object.entries(data.metrics).forEach(([key, value]) => {
+          if (typeof value === 'string' && !isNaN(Number(value))) {
+            numericMetrics[key] = Number(value);
+          } else if (typeof value === 'number') {
+            numericMetrics[key] = value;
+          }
+        });
+        
+        return numericMetrics;
+      } else {
+        console.log('Failed to fetch from MongoDB, using fallback metrics');
+        return metrics;
+      }
+    } catch (error) {
+      console.error('Error fetching metrics from MongoDB:', error);
+      return metrics;
+    }
+  };
 
   // Function to log chat conversation to n8n webhook
   const logChatToWebhook = async (question: string, answer: string) => {
@@ -80,8 +123,8 @@ const MistralInsights: React.FC<MistralInsightsProps> = ({ metrics, overallScore
     }
   };
 
-  const formatAllMetrics = () => {
-    const allMetrics = Object.entries(metrics)
+  const formatAllMetrics = (metricsData: Record<string, number>) => {
+    const allMetrics = Object.entries(metricsData)
       .map(([key, value]) => `${key}: ${value}`)
       .join('\n');
 
@@ -131,7 +174,13 @@ Provide specific, actionable recommendations for each section with clear explana
     setError('');
 
     try {
-      const fullPrompt = formatAllMetrics();
+      // First, fetch the latest metrics from MongoDB
+      console.log('Fetching metrics from MongoDB for dataset:', currentDatasetId);
+      const fetchedMetrics = await fetchMetricsFromMongoDB();
+      
+      console.log('Using metrics for analysis:', fetchedMetrics);
+      
+      const fullPrompt = formatAllMetrics(fetchedMetrics);
       const response = await sendToMistral(fullPrompt);
       setInsights(response);
       
@@ -312,14 +361,14 @@ Provide specific, actionable recommendations for each section with clear explana
             {loading ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Analyzing Dataset...
+                Fetching & Analyzing...
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Get AI Insights
+                Get AI Insights (from MongoDB)
               </div>
             )}
           </button>
