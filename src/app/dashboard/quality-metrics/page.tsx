@@ -211,9 +211,12 @@ export default function QualityMetrics() {
   // Force re-render to ensure chart updates
   const [forceUpdate, setForceUpdate] = useState(0);
 
-  const convertToCSV = (dataset: Dataset): string => {
+  const convertToCSV = (dataset: Dataset, percentage: number = 100): string => {
+    const sampleSize = Math.ceil((dataset.data.length * percentage) / 100);
+    const sampleData = dataset.data.slice(0, sampleSize);
+    
     const headers = dataset.columns.map(col => col.name).join(',') + '\n';
-    const rows = dataset.data.map(row => 
+    const rows = sampleData.map(row => 
       dataset.columns.map(col => {
         const value = row[col.name];
         if (typeof value === 'string') {
@@ -518,8 +521,9 @@ export default function QualityMetrics() {
         // If no cached data, proceed with Flask backend
         toast.loading('Calculating new metrics...', { duration: 3000 });
         
-        const csvData = convertToCSV(selected);
-        const flaskResponse = await fetch('https://metric-models-dataviz.onrender.com/analyze', {
+        const csvData = convertToCSV(selected, 40);  // Send 40% of data
+
+        const flaskResponse = await fetch('https://metric-models-dataviz-gno3.onrender.com/analyze', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -527,10 +531,11 @@ export default function QualityMetrics() {
           body: JSON.stringify({
             datasetId: selected._id,
             datasetName: selected.name,
-            csvData,
+            csvData,  // 40% of data
             targetColumn: null
           }),
         });
+
 
         if (!flaskResponse.ok) {
           throw new Error('Failed to generate metrics from backend');
@@ -1212,14 +1217,12 @@ export default function QualityMetrics() {
                         {/* Issues Card */}
                         <div className="bg-white rounded-lg p-6 border border-gray-200">
                           <h4 className="text-lg font-medium text-gray-900 mb-4">Critical Issues</h4>
-                          <div className="space-y-4">
-                            {Object.entries(analysisResult.top_issues).map(([issue, score]) => (
-                              <div key={issue} className="flex items-center justify-between">
+                          <div className="space-y-3">
+                            {Object.entries(analysisResult.top_issues).map(([issue]) => (
+                              <div key={issue} className="flex items-center">
+                                <div className="w-2 h-2 bg-red-500 rounded-full mr-3 flex-shrink-0"></div>
                                 <span className="text-sm font-medium text-gray-700">
                                   {formatMetricName(issue)}
-                                </span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getScoreBadgeClass(getScoreLabelFromNumber(Number(score) * 100))}`}>
-                                  {Math.round(Number(score) * 100)}%
                                 </span>
                               </div>
                             ))}

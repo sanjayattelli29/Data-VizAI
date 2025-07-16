@@ -301,7 +301,7 @@ I can still help with basic analysis:
 
       {/* Add AI feature hint */}
       <div className="bg-blue-50 p-4 rounded-lg mb-4 text-sm text-blue-700">
-        💡 Pro tip: Start your message with @ai to get detailed AI-powered analysis with MongoDB metrics (300-600 chars)
+        💡 Pro tip: Start your message with @ai to get detailed AI-powered Insights
       </div>
       
       {/* Dataset Selection */}
